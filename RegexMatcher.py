@@ -1,15 +1,29 @@
 import re
 import wx
+import wx.stc as stc
 
-__ver__ = 'v0.1.0'
+__ver__ = 'v0.1.1'
+
+
+class MyTextCtrl(stc.StyledTextCtrl):
+    def __init__(self, parent):
+        stc.StyledTextCtrl.__init__(self, parent)
+
+        self.StyleSetSpec(stc.STC_STYLE_DEFAULT, 'face:Courier New,size:11')
+        self.SetMarginType(1, stc.STC_MARGIN_NUMBER)
+        self.SetMarginWidth(1, 30)
+        self.SetMargins(5, -5)
+        self.SetTabWidth(4)
+        self.SetViewWhiteSpace(True)
+        self.SetWrapMode(stc.STC_WRAP_CHAR)
 
 
 class MyPanel(wx.Panel):
     def __init__(self, parent):
         wx.Panel.__init__(self, parent)
 
-        self.text    = wx.TextCtrl(self, style=wx.TE_MULTILINE|wx.TE_RICH2)
-        self.result  = wx.TextCtrl(self, style=wx.TE_MULTILINE|wx.TE_RICH2)
+        self.text    = MyTextCtrl(self)
+        self.result  = MyTextCtrl(self)
         self.pattern = wx.TextCtrl(self, size=(20, -1))
 
         btn_up = wx.Button(self, -1, '<', size=(24, 24))
@@ -53,12 +67,11 @@ class MyPanel(wx.Panel):
         pos = self.text.GetInsertionPoint()
         matchs = [m.span() for m in re.finditer(self.pattern.GetValue(), self.text.GetValue(), re.M)]
         if direction > 0:
-            p1, p2 = min([span for span in matchs if span[0] > pos] or [matchs[0]])
+            p1, p2 = min([span for span in matchs if span[1] > pos] or [matchs[0]])
         else:
-            p1, p2 = max([span for span in matchs if span[0] < pos] or [matchs[-1]])
-        self.text.SetSelection(p1, p2)
+            p1, p2 = max([span for span in matchs if span[1] < pos] or [matchs[-1]])
         self.text.ShowPosition(p1)
-        self.text.SetFocus()
+        self.text.SetSelection(p1, p2)
 
 
 if __name__ == '__main__':
