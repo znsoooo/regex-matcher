@@ -51,19 +51,11 @@ class MyPanel(wx.Panel):
 
     def OnView(self, direction):
         pos = self.text.GetInsertionPoint()
-        matchs = list(re.finditer(self.pattern.GetValue(), self.text.GetValue(), re.M))
+        matchs = [m.span() for m in re.finditer(self.pattern.GetValue(), self.text.GetValue(), re.M)]
         if direction > 0:
-            p1, p2 = matchs[0].span()
-            for m in matchs:
-                if m.start() > pos:
-                    p1, p2 = m.span()
-                    break
+            p1, p2 = min([span for span in matchs if span[0] > pos] or [matchs[0]])
         else:
-            p1, p2 = matchs[-1].span()
-            for m in reversed(matchs):
-                if m.start() < pos:
-                    p1, p2 = m.span()
-                    break
+            p1, p2 = max([span for span in matchs if span[0] < pos] or [matchs[-1]])
         self.text.SetSelection(p1, p2)
         self.text.ShowPosition(p1)
         self.text.SetFocus()
