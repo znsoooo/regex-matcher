@@ -76,8 +76,8 @@ class MyPanel(wx.Panel, Private):
 
         self.cb_sorted  = wx.CheckBox(self, -1, 'Sorted')
         self.cb_unique  = wx.CheckBox(self, -1, 'Unique')
-        self.cb_regex   = wx.CheckBox(self, -1, 'RegEx:')
-        self.cb_replace = wx.CheckBox(self, -1, 'Replace:')
+        self.rb_regex   = wx.RadioButton(self, -1, 'RegEx:', style=wx.RB_GROUP)
+        self.rb_replace = wx.RadioButton(self, -1, 'Replace:')
 
         bt_open  = wx.Button(self, -1, 'Open',  size=(48, 24))
         bt_save  = wx.Button(self, -1, 'Save',  size=(48, 24))
@@ -100,11 +100,11 @@ class MyPanel(wx.Panel, Private):
         box2.Add(self.cb_unique,  0, wx.ALIGN_CENTER)
 
         box3 = wx.GridBagSizer(vgap=5, hgap=5)
-        box3.Add(self.cb_regex,   (0, 0), (1, 1), flags)
+        box3.Add(self.rb_regex,   (0, 0), (1, 1), flags)
         box3.Add(self.tc_patt,    (0, 1), (1, 1), flags)
         box3.Add(bt_prev,         (0, 2), (1, 1), flags)
         box3.Add(bt_next,         (0, 3), (1, 1), flags)
-        box3.Add(self.cb_replace, (1, 0), (1, 1), flags)
+        box3.Add(self.rb_replace, (1, 0), (1, 1), flags)
         box3.Add(self.tc_repl,    (1, 1), (1, 1), flags)
         box3.Add(bt_apply,        (1, 2), (1, 2), flags)
         box3.AddGrowableCol(1)
@@ -123,7 +123,8 @@ class MyPanel(wx.Panel, Private):
         box.Add(box4, 1, wx.EXPAND | wx.ALL, 5)
         self.SetSizer(box)
 
-        self.cb_regex.SetValue(True)
+        self.tc_patt.SetValue('.+')
+        self.tc_repl.Enable(False)
 
         bt_open.Bind(wx.EVT_BUTTON, self.OnOpen)
         bt_save.Bind(wx.EVT_BUTTON, self.OnSave)
@@ -131,8 +132,12 @@ class MyPanel(wx.Panel, Private):
         self.cb_sorted.Bind(wx.EVT_CHECKBOX, self.OnMatch)
         self.cb_unique.Bind(wx.EVT_CHECKBOX, self.OnMatch)
 
+        self.rb_regex  .Bind(wx.EVT_RADIOBUTTON, self.OnMatch)
+        self.rb_replace.Bind(wx.EVT_RADIOBUTTON, self.OnMatch)
+
         self.tc_text.Bind(stc.EVT_STC_CHANGE, self.OnMatch)
         self.tc_patt.Bind(wx.EVT_TEXT, self.OnMatch)
+        self.tc_repl.Bind(wx.EVT_TEXT, self.OnMatch)
 
         bt_prev.Bind(wx.EVT_BUTTON, lambda e: self.OnView(-1))
         bt_next.Bind(wx.EVT_BUTTON, lambda e: self.OnView( 1))
@@ -159,7 +164,12 @@ class MyPanel(wx.Panel, Private):
     def OnMatch(self, evt):
         try:
             patt = self.pattern
-            results = re.findall(patt, patt and self.text, re.M)
+            if self.rb_regex.GetValue():
+                self.tc_repl.Disable()
+                results = re.findall(patt, patt and self.text, re.M)
+            else:
+                self.tc_repl.Enable()
+                results = re.sub(patt, self.replace, self.text, 0, re.M).split('\n')
             if self.cb_unique.GetValue():
                 results = dict.fromkeys(results)
             if self.cb_sorted.GetValue():
