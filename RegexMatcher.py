@@ -69,6 +69,8 @@ class MyPanel(wx.Panel, Private):
     def __init__(self, parent):
         wx.Panel.__init__(self, parent)
 
+        # - Add widgets --------------------
+
         self.tc_text = MyTextCtrl(self)
         self.tc_res  = MyTextCtrl(self)
         self.tc_patt = wx.TextCtrl(self, size=(20, -1))
@@ -86,6 +88,8 @@ class MyPanel(wx.Panel, Private):
         bt_apply = wx.Button(self, -1, 'Apply', size=(24, 24))
 
         TEXT = lambda s: wx.StaticText(self, -1, s)
+
+        # - Set layout --------------------
 
         flags = wx.EXPAND | wx.ALIGN_CENTER
 
@@ -123,8 +127,12 @@ class MyPanel(wx.Panel, Private):
         box.Add(box4, 1, wx.EXPAND | wx.ALL, 5)
         self.SetSizer(box)
 
+        # - Initial data --------------------
+
         self.tc_patt.SetValue('.+')
         self.tc_repl.Enable(False)
+
+        # - Bind functions --------------------
 
         bt_open.Bind(wx.EVT_BUTTON, self.OnOpen)
         bt_save.Bind(wx.EVT_BUTTON, self.OnSave)
