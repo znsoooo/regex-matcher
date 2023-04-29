@@ -137,15 +137,12 @@ class MyPanel(wx.Panel, Private):
         bt_open.Bind(wx.EVT_BUTTON, self.OnOpen)
         bt_save.Bind(wx.EVT_BUTTON, self.OnSave)
 
-        self.cb_sorted.Bind(wx.EVT_CHECKBOX, self.OnMatch)
-        self.cb_unique.Bind(wx.EVT_CHECKBOX, self.OnMatch)
-
-        self.rb_regex  .Bind(wx.EVT_RADIOBUTTON, self.OnMatch)
-        self.rb_replace.Bind(wx.EVT_RADIOBUTTON, self.OnMatch)
-
-        self.tc_text.Bind(stc.EVT_STC_CHANGE, self.OnMatch)
-        self.tc_patt.Bind(wx.EVT_TEXT, self.OnMatch)
-        self.tc_repl.Bind(wx.EVT_TEXT, self.OnMatch)
+        for evt, *widgets in [(stc.EVT_STC_CHANGE, self.tc_text),
+                              (wx.EVT_TEXT, self.tc_patt, self.tc_repl),
+                              (wx.EVT_CHECKBOX, self.cb_sorted, self.cb_unique),
+                              (wx.EVT_RADIOBUTTON, self.rb_regex, self.rb_replace)]:
+            for widget in widgets:
+                widget.Bind(evt, self.OnMatch)
 
         bt_prev.Bind(wx.EVT_BUTTON, lambda e: self.OnView(-1))
         bt_next.Bind(wx.EVT_BUTTON, lambda e: self.OnView( 1))
