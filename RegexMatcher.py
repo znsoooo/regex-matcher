@@ -1,8 +1,21 @@
+import os
 import re
 import wx
 import wx.stc as stc
 
 __ver__ = 'v0.2.0'
+
+
+def ReadFile(path):
+    ext = os.path.splitext(path)[1].lower()
+    if ext == '.txt':
+        try:
+            with open(path, 'r') as f:
+                text = f.read()
+        except UnicodeDecodeError:
+            with open(path, 'r', encoding='u8') as f:
+                text = f.read()
+    return text
 
 
 class MyTextCtrl(stc.StyledTextCtrl):
@@ -18,7 +31,41 @@ class MyTextCtrl(stc.StyledTextCtrl):
         self.SetWrapMode(stc.STC_WRAP_CHAR)
 
 
-class MyPanel(wx.Panel):
+class Private:
+    @property
+    def text(self):
+        return self.tc_text.GetValue()
+
+    @text.setter
+    def text(self, value):
+        self.tc_text.SetValue(str(value))
+
+    @property
+    def result(self):
+        return self.tc_res.GetValue()
+
+    @result.setter
+    def result(self, value):
+        self.tc_res.SetValue(str(value))
+
+    @property
+    def pattern(self):
+        return self.tc_patt.GetValue()
+
+    @pattern.setter
+    def pattern(self, value):
+        self.tc_patt.SetValue(str(value))
+
+    @property
+    def replace(self):
+        return self.tc_repl.GetValue()
+
+    @replace.setter
+    def replace(self, value):
+        self.tc_repl.SetValue(str(value))
+
+
+class MyPanel(wx.Panel, Private):
     def __init__(self, parent):
         wx.Panel.__init__(self, parent)
 
@@ -76,29 +123,66 @@ class MyPanel(wx.Panel):
         box.Add(box4, 1, wx.EXPAND | wx.ALL, 5)
         self.SetSizer(box)
 
-        self.tc_text.Bind(wx.EVT_TEXT, self.OnMatch)
+        self.cb_regex.SetValue(True)
+
+        bt_open.Bind(wx.EVT_BUTTON, self.OnOpen)
+        bt_save.Bind(wx.EVT_BUTTON, self.OnSave)
+
+        self.cb_sorted.Bind(wx.EVT_CHECKBOX, self.OnMatch)
+        self.cb_unique.Bind(wx.EVT_CHECKBOX, self.OnMatch)
+
+        self.tc_text.Bind(stc.EVT_STC_CHANGE, self.OnMatch)
         self.tc_patt.Bind(wx.EVT_TEXT, self.OnMatch)
+
         bt_prev.Bind(wx.EVT_BUTTON, lambda e: self.OnView(-1))
         bt_next.Bind(wx.EVT_BUTTON, lambda e: self.OnView( 1))
 
+        bt_apply.Bind(wx.EVT_BUTTON, self.OnApply)
+
+    def OnOpen(self, evt):
+        dialog = wx.FileDialog(self, wildcard='Text file|*.txt',
+                               style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST | wx.FD_MULTIPLE)
+        if dialog.ShowModal() == wx.ID_OK:
+            for path in dialog.GetPaths():
+                self.text += ReadFile(path) + '\n'
+        dialog.Destroy()
+
+    def OnSave(self, evt):
+        dlg = wx.FileDialog(self, wildcard='Text file|*.txt',
+                            style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
+        if dlg.ShowModal() == wx.ID_OK:
+            path = dlg.GetPath()
+            with open(path, 'w', encoding='u8') as f:
+                f.write(self.text)
+        dlg.Destroy()
+
     def OnMatch(self, evt):
         try:
-            patt = self.tc_patt.GetValue()
-            results = re.findall(patt, patt and self.tc_text.GetValue(), re.M)
+            patt = self.pattern
+            results = re.findall(patt, patt and self.text, re.M)
+            if self.cb_unique.GetValue():
+                results = dict.fromkeys(results)
+            if self.cb_sorted.GetValue():
+                results = sorted(results)
             result = '\n'.join(results)
         except re.error as e:
             result = str(e)
-        self.tc_res.SetValue(result)
+        self.result = result
 
     def OnView(self, direction):
         pos = self.tc_text.GetInsertionPoint()
-        matchs = [m.span() for m in re.finditer(self.tc_patt.GetValue(), self.tc_text.GetValue(), re.M)]
+        patt = self.pattern
+        matchs = [m.span() for m in re.finditer(patt, patt and self.text, re.M)]
         if direction > 0:
             p1, p2 = min([span for span in matchs if span[1] > pos] or [matchs[0]])
         else:
             p1, p2 = max([span for span in matchs if span[1] < pos] or [matchs[-1]])
         self.tc_text.ShowPosition(p1)
         self.tc_text.SetSelection(p1, p2)
+
+    def OnApply(self, evt):
+        self.text = self.result
+        self.OnMatch(-1)
 
 
 if __name__ == '__main__':
