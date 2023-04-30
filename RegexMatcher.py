@@ -27,6 +27,7 @@ class MyTextCtrl(stc.StyledTextCtrl):
         stc.StyledTextCtrl.__init__(self, parent)
 
         self.StyleSetSpec(stc.STC_STYLE_DEFAULT, 'face:Courier New,size:11')
+        self.StyleSetSpec(1, 'back:#FFFF00')
         self.SetEOLMode(stc.STC_EOL_LF)  # fix save file '\r\n' translate to '\r\r\n'
         self.SetMarginType(1, stc.STC_MARGIN_NUMBER)
         self.SetMarginWidth(1, 30)
@@ -134,7 +135,7 @@ class MyPanel(wx.Panel, Private):
 
         # - Initial data --------------------
 
-        self.tc_patt.SetValue('.+')
+        self.tc_patt.SetValue('')
         self.tc_repl.Enable(False)
 
         # - Bind functions --------------------
@@ -175,15 +176,22 @@ class MyPanel(wx.Panel, Private):
 
     def OnMatch(self, evt):
         try:
-            patt = self.pattern
+            text, patt = self.text, self.pattern
+            self.tc_text.ClearDocumentStyle()
+            for m in re.finditer(patt, patt and text, re.M):
+                regs = m.regs[1:] or m.regs[:1]  # match whole group if sub-groups don't exist
+                for p1, p2 in regs:
+                    p1, p2 = [len(text[:p].encode()) for p in (p1, p2)]  # unicode index -> bytes index
+                    self.tc_text.StartStyling(p1, 0xFFFF)
+                    self.tc_text.SetStyling(p2 - p1, 1)
             if self.rb_regex.GetValue():
                 self.tc_repl.Disable()
                 results = []
-                for m in re.finditer(patt, patt and self.text, re.M):
+                for m in re.finditer(patt, patt and text, re.M):
                     results.append('\t'.join(m.groups() or [m.group()]))  # join sub-strings by '\t'
             else:
                 self.tc_repl.Enable()
-                results = re.sub(patt, self.replace, self.text, 0, re.M).split('\n')
+                results = re.sub(patt, self.replace, text, 0, re.M).split('\n')
             if self.cb_unique.GetValue():
                 results = dict.fromkeys(results)
             if self.cb_sorted.GetValue():
@@ -194,8 +202,7 @@ class MyPanel(wx.Panel, Private):
         self.result = result
 
     def OnView(self, direction):
-        text = self.text
-        patt = self.pattern
+        text, patt = self.text, self.pattern
         pos = self.tc_text.GetInsertionPoint()
         pos = len(text.encode()[:pos].decode())  # bytes index -> unicode index
         matchs = [m.span() for m in re.finditer(patt, patt and text, re.M)]
