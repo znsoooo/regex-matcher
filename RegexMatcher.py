@@ -27,6 +27,7 @@ class MyTextCtrl(stc.StyledTextCtrl):
         stc.StyledTextCtrl.__init__(self, parent)
 
         self.StyleSetSpec(stc.STC_STYLE_DEFAULT, 'face:Courier New,size:11')
+        self.SetEOLMode(stc.STC_EOL_LF)  # fix save file '\r\n' translate to '\r\r\n'
         self.SetMarginType(1, stc.STC_MARGIN_NUMBER)
         self.SetMarginWidth(1, 30)
         self.SetMargins(5, -5)
