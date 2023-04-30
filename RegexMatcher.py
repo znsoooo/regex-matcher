@@ -159,6 +159,8 @@ class MyPanel(wx.Panel, Private):
         if dlg.ShowModal() == wx.ID_OK:
             for path in dlg.GetPaths():
                 self.text += ReadFile(path) + '\n'
+            self.tc_text.SetFocus()
+            wx.CallAfter(self.tc_text.GotoLine, self.tc_text.GetLineCount())
         dlg.Destroy()
 
     def OnSave(self, evt):
