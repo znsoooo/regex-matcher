@@ -36,6 +36,15 @@ class MyTextCtrl(stc.StyledTextCtrl):
         self.SetViewWhiteSpace(True)
         self.SetWrapMode(stc.STC_WRAP_CHAR)
 
+        self.Bind(stc.EVT_STC_CHANGE, self.OnText)
+
+        self.OnText(-1)
+
+    def OnText(self, evt):
+        lines = self.GetLineCount()
+        width = len(str(lines)) * 9 + 5
+        self.SetMarginWidth(1, width)
+
 
 class Private:
     @property
