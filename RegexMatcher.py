@@ -185,13 +185,16 @@ class MyPanel(wx.Panel, Private):
         self.result = result
 
     def OnView(self, direction):
-        pos = self.tc_text.GetInsertionPoint()
+        text = self.text
         patt = self.pattern
-        matchs = [m.span() for m in re.finditer(patt, patt and self.text, re.M)]
+        pos = self.tc_text.GetInsertionPoint()
+        pos = len(text.encode()[:pos].decode())  # bytes index -> unicode index
+        matchs = [m.span() for m in re.finditer(patt, patt and text, re.M)]
         if direction > 0:
             p1, p2 = min([span for span in matchs if span[1] > pos] or [matchs[0]])
         else:
             p1, p2 = max([span for span in matchs if span[1] < pos] or [matchs[-1]])
+        p1, p2 = [len(text[:p].encode()) for p in (p1, p2)]  # unicode index -> bytes index
         self.tc_text.ShowPosition(p1)
         self.tc_text.SetSelection(p1, p2)
 
