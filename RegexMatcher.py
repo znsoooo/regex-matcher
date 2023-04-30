@@ -1,5 +1,7 @@
 import os
 import re
+import time
+
 import wx
 import wx.stc as stc
 
@@ -160,7 +162,7 @@ class MyPanel(wx.Panel, Private):
         dlg.Destroy()
 
     def OnSave(self, evt):
-        dlg = wx.FileDialog(self, wildcard='Text file|*.txt',
+        dlg = wx.FileDialog(self, wildcard='Text file|*.txt', defaultFile=time.strftime('TXT_%Y%m%d_%H%M%S.txt'),
                             style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
         if dlg.ShowModal() == wx.ID_OK:
             path = dlg.GetPath()
