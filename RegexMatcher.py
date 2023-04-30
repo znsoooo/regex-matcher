@@ -146,7 +146,8 @@ class MyPanel(wx.Panel, Private):
         for evt, *widgets in [(stc.EVT_STC_CHANGE, self.tc_text),
                               (wx.EVT_TEXT, self.tc_patt, self.tc_repl),
                               (wx.EVT_CHECKBOX, self.cb_sorted, self.cb_unique),
-                              (wx.EVT_RADIOBUTTON, self.rb_regex, self.rb_replace)]:
+                              (wx.EVT_RADIOBUTTON, self.rb_regex, self.rb_replace),
+                              (wx.EVT_SET_FOCUS, self.tc_text, self.tc_patt, self.tc_repl)]:
             for widget in widgets:
                 widget.Bind(evt, self.OnMatch)
 
@@ -201,6 +202,8 @@ class MyPanel(wx.Panel, Private):
         except re.error as e:
             result = str(e)
         self.result = result
+        if isinstance(evt, wx.Event):
+            evt.Skip()
 
     def OnView(self, direction):
         text, patt = self.text, self.pattern
