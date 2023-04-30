@@ -91,7 +91,7 @@ class MyPanel(wx.Panel, Private):
 
         # - Set layout --------------------
 
-        flags = wx.EXPAND | wx.ALIGN_CENTER
+        flags = wx.EXPAND
 
         box1 = wx.BoxSizer()
         box1.Add(TEXT('Text:'), 1, wx.ALIGN_CENTER)
