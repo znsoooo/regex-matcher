@@ -209,10 +209,41 @@ class MyPanel(wx.Panel, Private):
         self.OnMatch(-1)
 
 
+class MyFrame(wx.Frame):
+    def __init__(self):
+        wx.Frame.__init__(self, None, title='RegEx Matcher '+__ver__, size=(1200, 800))
+
+        self.panel = MyPanel(self)
+        self.log = 'log.txt'
+
+        self.OnOpen()
+        self.Center()
+        self.Show()
+
+        self.Bind(wx.EVT_CHAR_HOOK, self.OnKeyPress)
+        self.Bind(wx.EVT_CLOSE, self.OnClose)
+
+    def OnKeyPress(self, evt):
+        if wx.WXK_ESCAPE == evt.GetKeyCode():
+            self.Close()
+        else:
+            evt.Skip()
+
+    def OnOpen(self):
+        if os.path.isfile(self.log):
+            self.panel.text = ReadFile(self.log)
+
+    def OnClose(self, evt):
+        text = self.panel.text
+        if text:
+            with open(self.log, 'w', encoding='u8') as f:
+                f.write(text)
+        elif os.path.isfile(self.log):
+            os.remove(self.log)
+        evt.Skip()
+
+
 if __name__ == '__main__':
     app = wx.App()
-    frm = wx.Frame(None, title='RegEx Matcher '+__ver__, size=(1200, 800))
-    pnl = MyPanel(frm)
-    frm.Centre()
-    frm.Show()
+    MyFrame()
     app.MainLoop()
