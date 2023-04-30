@@ -8,12 +8,14 @@ __ver__ = 'v0.2.0'
 
 def ReadFile(path):
     ext = os.path.splitext(path)[1].lower()
-    if ext == '.txt':
+    if ext == '.docx':
+        pass
+    else:
         try:
-            with open(path, 'r') as f:
+            with open(path, 'r', encoding='u8') as f:
                 text = f.read()
         except UnicodeDecodeError:
-            with open(path, 'r', encoding='u8') as f:
+            with open(path, 'r') as f:
                 text = f.read()
     return text
 
@@ -150,7 +152,7 @@ class MyPanel(wx.Panel, Private):
         bt_apply.Bind(wx.EVT_BUTTON, self.OnApply)
 
     def OnOpen(self, evt):
-        dlg = wx.FileDialog(self, wildcard='Text file|*.txt',
+        dlg = wx.FileDialog(self, wildcard='Text file|*.txt|All file|*.*',
                             style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST | wx.FD_MULTIPLE)
         if dlg.ShowModal() == wx.ID_OK:
             for path in dlg.GetPaths():
