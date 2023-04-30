@@ -177,7 +177,8 @@ class MyPanel(wx.Panel, Private):
     def OnMatch(self, evt):
         try:
             text, patt = self.text, self.pattern
-            self.tc_text.ClearDocumentStyle()
+            self.tc_text.StartStyling(0, 0xFFFF)
+            self.tc_text.SetStyling(len(text.encode()), 0)
             for m in re.finditer(patt, patt and text, re.M):
                 regs = m.regs[1:] or m.regs[:1]  # match whole group if sub-groups don't exist
                 for p1, p2 in regs:
