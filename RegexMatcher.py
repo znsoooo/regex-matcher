@@ -178,7 +178,9 @@ class MyPanel(wx.Panel, Private):
             patt = self.pattern
             if self.rb_regex.GetValue():
                 self.tc_repl.Disable()
-                results = re.findall(patt, patt and self.text, re.M)
+                results = []
+                for m in re.finditer(patt, patt and self.text, re.M):
+                    results.append('\t'.join(m.groups() or [m.group()]))  # join sub-strings by '\t'
             else:
                 self.tc_repl.Enable()
                 results = re.sub(patt, self.replace, self.text, 0, re.M).split('\n')
