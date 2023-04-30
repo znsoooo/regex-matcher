@@ -150,12 +150,12 @@ class MyPanel(wx.Panel, Private):
         bt_apply.Bind(wx.EVT_BUTTON, self.OnApply)
 
     def OnOpen(self, evt):
-        dialog = wx.FileDialog(self, wildcard='Text file|*.txt',
-                               style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST | wx.FD_MULTIPLE)
-        if dialog.ShowModal() == wx.ID_OK:
-            for path in dialog.GetPaths():
+        dlg = wx.FileDialog(self, wildcard='Text file|*.txt',
+                            style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST | wx.FD_MULTIPLE)
+        if dlg.ShowModal() == wx.ID_OK:
+            for path in dlg.GetPaths():
                 self.text += ReadFile(path) + '\n'
-        dialog.Destroy()
+        dlg.Destroy()
 
     def OnSave(self, evt):
         dlg = wx.FileDialog(self, wildcard='Text file|*.txt',
