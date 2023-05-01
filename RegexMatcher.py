@@ -28,10 +28,12 @@ class MyTextCtrl(stc.StyledTextCtrl):
 
         self.StyleSetSpec(stc.STC_STYLE_DEFAULT, 'face:Courier New,size:11')
         self.StyleSetSpec(1, 'back:#FFFF00')
+        self.SetAdditionalSelectionTyping(True)
         self.SetEOLMode(stc.STC_EOL_LF)  # fix save file '\r\n' translate to '\r\r\n'
         self.SetMarginType(1, stc.STC_MARGIN_NUMBER)
         self.SetMarginWidth(1, 30)
         self.SetMargins(5, -5)
+        self.SetMultipleSelection(True)
         self.SetTabWidth(4)
         self.SetViewWhiteSpace(True)
         self.SetWrapMode(stc.STC_WRAP_CHAR)
