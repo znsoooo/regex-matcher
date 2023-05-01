@@ -45,6 +45,12 @@ class MyTextCtrl(stc.StyledTextCtrl):
         width = len(str(lines)) * 9 + 5
         self.SetMarginWidth(1, width)
 
+    def StartStyling(self, start):
+        try:
+            super().StartStyling(start)
+        except TypeError:  # compatible for old version of wxPython
+            super().StartStyling(start, 0xFFFF)
+
 
 class Private:
     @property
@@ -187,13 +193,13 @@ class MyPanel(wx.Panel, Private):
     def OnMatch(self, evt):
         try:
             text, patt = self.text, self.pattern
-            self.tc_text.StartStyling(0, 0xFFFF)
+            self.tc_text.StartStyling(0)
             self.tc_text.SetStyling(len(text.encode()), 0)
             for m in re.finditer(patt, patt and text, re.M):
                 regs = m.regs[1:] or m.regs[:1]  # match whole group if sub-groups don't exist
                 for p1, p2 in regs:
                     p1, p2 = [len(text[:p].encode()) for p in (p1, p2)]  # unicode index -> bytes index
-                    self.tc_text.StartStyling(p1, 0xFFFF)
+                    self.tc_text.StartStyling(p1)
                     self.tc_text.SetStyling(p2 - p1, 1)
             if self.rb_regex.GetValue():
                 self.tc_repl.Disable()
@@ -219,6 +225,8 @@ class MyPanel(wx.Panel, Private):
         pos = self.tc_text.GetInsertionPoint()
         pos = len(text.encode()[:pos].decode())  # bytes index -> unicode index
         matchs = [m.span() for m in re.finditer(patt, patt and text, re.M)]
+        if not matchs:
+            return
         if direction > 0:
             p1, p2 = min([span for span in matchs if span[1] > pos] or [matchs[0]])
         else:
