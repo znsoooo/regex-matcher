@@ -5,7 +5,7 @@ import time
 import wx
 import wx.stc as stc
 
-__ver__ = 'v0.2.1'
+__ver__ = 'v0.2.2'
 
 
 def ReadFile(path):
