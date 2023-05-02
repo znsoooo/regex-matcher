@@ -1,5 +1,10 @@
 # regex-matcher
-Search regex matched in text in GUI interface
+
+- Using GUI to apply RegEx matching or replacement for the text.
+- Input RegEx and highlight the matching results in real-time in the `Text` window, support multi-groups.
+- The matches are displayed in the `Result` window, separated by `Tab`, can be copied to `Excel` sheet.
+- Use the `Sorted` or `Unique` switch to filter the results.
+- Support to open plain `TEXT` documents.
 
 
 ## 1. About
@@ -17,22 +22,42 @@ python RegexMatcher.py
 ```
 
 
-## 3. Specification
+## 3. GUI Introduction
+```
++------------------------------------------------------------------+
+| Regex Matcher v1.0.0                                 [_] [ ] [X] |
++---------------------------------+--------------------------------+
+| Text:                           | Result:                        |
+|                                 |                                |
+| The quick brown fox jumps over  | quick                          |
+| the lazy dog.                   | brown                          |
+|                                 | jumps                          |
+|                                 |                                |
+|                                 |                                |
+|                                 +------------------------+---+---+
+|                                 | [V] RegEx:   [ \w{5} ] | < | > +
+|                                 +------------------------+---+---+
+|                                 | [X] Replace: [       ] | Apply |
++---------------------------------+------------------------+-------+
+```
 
-### 3.1 Open / Save
+
+## 4. Specification
+
+### 4.1 Open / Save
 - Open multiple `*.txt` files and show in `Text` window
 - Save current text in `Text` window to local disk
 
-### 3.2 RegEx / Replace
+### 4.2 RegEx / Replace
 - In `RegEx` mode, input pattern and find matches in `Text` and show in `Result` window
 - In `Replace` mode, input pattern and replace to replace text in `Text` window
 
-### 3.3 Sorted / Unique
+### 4.3 Sorted / Unique
 - Sort found items and show in `Result` window
 - Remove duplicate item in `Result` window
 
-### 3.4 Prev / Next
+### 4.4 Prev / Next
 - View previous / next match position in `Text` window
 
-### 3.5 Apply
+### 4.5 Apply
 - Use current `Result` window's text to replace `Text` window
