@@ -247,6 +247,7 @@ class MyFrame(wx.Frame):
         wx.Frame.__init__(self, None, title='RegEx Matcher '+__ver__, size=(1200, 800))
 
         self.panel = MyPanel(self)
+        self.panel.SetSize(self.GetClientSize())
         self.log = 'log.txt'
 
         self.OnOpen()
