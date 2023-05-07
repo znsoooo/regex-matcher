@@ -3,7 +3,7 @@ import re
 import wx
 import wx.stc as stc
 
-__ver__ = 'v0.2.3'
+__ver__ = 'v1.0.0'
 
 
 class MyTextCtrl(stc.StyledTextCtrl):
@@ -73,69 +73,70 @@ class Private:
         self.tc_repl.SetValue(str(value))
 
 
-class MyPanel(wx.Panel, Private):
+class MyPanel(Private):
     def __init__(self, parent):
-        wx.Panel.__init__(self, parent)
+        p1 = wx.Panel(parent)
+        p2 = wx.Panel(parent)
 
         # - Add widgets --------------------
 
-        self.tc_text = MyTextCtrl(self)
-        self.tc_res  = MyTextCtrl(self)
-        self.tc_patt = wx.TextCtrl(self, size=(20, -1))
-        self.tc_repl = wx.TextCtrl(self, size=(20, -1))
+        self.tc_text = MyTextCtrl(p1)
+        self.tc_res  = MyTextCtrl(p2)
+        self.tc_patt = wx.TextCtrl(p2, size=(20, -1))
+        self.tc_repl = wx.TextCtrl(p2, size=(20, -1))
 
-        self.cb_sorted  = wx.CheckBox(self, -1, 'Sorted')
-        self.cb_unique  = wx.CheckBox(self, -1, 'Unique')
-        self.rb_regex   = wx.RadioButton(self, -1, 'RegEx:', style=wx.RB_GROUP)
-        self.rb_replace = wx.RadioButton(self, -1, 'Replace:')
+        self.cb_sorted  = wx.CheckBox(p2, -1, 'Sorted')
+        self.cb_unique  = wx.CheckBox(p2, -1, 'Unique')
+        self.rb_regex   = wx.RadioButton(p2, -1, 'RegEx:', style=wx.RB_GROUP)
+        self.rb_replace = wx.RadioButton(p2, -1, 'Replace:')
 
-        bt_prev  = wx.Button(self, -1, '<',     size=(24, 24))
-        bt_next  = wx.Button(self, -1, '>',     size=(24, 24))
-        bt_apply = wx.Button(self, -1, 'Apply', size=(24, 24))
+        self.bt_prev  = wx.Button(p2, -1, '<',     size=(24, 24))
+        self.bt_next  = wx.Button(p2, -1, '>',     size=(24, 24))
+        self.bt_apply = wx.Button(p2, -1, 'Apply', size=(24, 24))
 
-        TEXT = lambda s: wx.StaticText(self, -1, s)
+        self.st_text = wx.StaticText(p1, -1, 'Text:')
+        self.st_res  = wx.StaticText(p2, -1, 'Result:')
 
         # - Set layout --------------------
 
-        flags = wx.EXPAND
+        gap = parent.GetSashSize()
 
-        box1 = wx.BoxSizer()
-        box1.Add(TEXT('Text:'), 1, wx.ALIGN_CENTER)
+        box1 = wx.BoxSizer(wx.VERTICAL)
+        flags1 = wx.EXPAND | wx.TOP | wx.LEFT
+        box1.Add(self.st_text, 0, flags1, gap)
+        box1.Add(self.tc_text, 1, flags1, gap)
+        box1.Add((0, 0),       0, flags1, gap)
 
-        box2 = wx.BoxSizer()
-        box2.Add(TEXT('Result:'), 1, wx.ALIGN_CENTER)
-        box2.Add(self.cb_sorted,  0, wx.ALIGN_CENTER)
-        box2.Add(self.cb_unique,  0, wx.ALIGN_CENTER)
+        box21 = wx.BoxSizer()
+        box21.Add(self.st_res,     1, wx.ALIGN_CENTER)
+        box21.Add(self.cb_sorted,  0, wx.ALIGN_CENTER)
+        box21.Add(self.cb_unique,  0, wx.ALIGN_CENTER)
 
-        box3 = wx.GridBagSizer(vgap=5, hgap=5)
-        box3.Add(self.rb_regex,   (0, 0), (1, 1), flags)
-        box3.Add(self.tc_patt,    (0, 1), (1, 1), flags)
-        box3.Add(bt_prev,         (0, 2), (1, 1), flags)
-        box3.Add(bt_next,         (0, 3), (1, 1), flags)
-        box3.Add(self.rb_replace, (1, 0), (1, 1), flags)
-        box3.Add(self.tc_repl,    (1, 1), (1, 1), flags)
-        box3.Add(bt_apply,        (1, 2), (1, 2), flags)
-        box3.AddGrowableCol(1)
+        box22 = wx.GridBagSizer(vgap=gap, hgap=gap)
+        box22.Add(self.rb_regex,   (0, 0), (1, 1), wx.EXPAND)
+        box22.Add(self.tc_patt,    (0, 1), (1, 1), wx.EXPAND)
+        box22.Add(self.bt_prev,    (0, 2), (1, 1), wx.EXPAND)
+        box22.Add(self.bt_next,    (0, 3), (1, 1), wx.EXPAND)
+        box22.Add(self.rb_replace, (1, 0), (1, 1), wx.EXPAND)
+        box22.Add(self.tc_repl,    (1, 1), (1, 1), wx.EXPAND)
+        box22.Add(self.bt_apply,   (1, 2), (1, 2), wx.EXPAND)
+        box22.AddGrowableCol(1)
 
-        box4 = wx.GridBagSizer(vgap=5, hgap=5)
-        box4.Add(box1,         (0, 0), (1, 1), flags)
-        box4.Add(box2,         (0, 1), (1, 1), flags)
-        box4.Add(self.tc_text, (1, 0), (2, 1), flags)
-        box4.Add(self.tc_res,  (1, 1), (1, 1), flags)
-        box4.Add(box3,         (2, 1), (1, 1), flags)
-        box4.AddGrowableRow(1)
-        box4.AddGrowableCol(0, 2)
-        box4.AddGrowableCol(1, 1)
+        box2 = wx.BoxSizer(wx.VERTICAL)
+        flags2 = wx.EXPAND | wx.TOP | wx.RIGHT
+        box2.Add(box21,       0, flags2, gap)
+        box2.Add(self.tc_res, 1, flags2, gap)
+        box2.Add(box22,       0, flags2, gap)
+        box2.Add((0, 0),      0, flags2, gap)
 
-        box = wx.BoxSizer()
-        box.Add(box4, 1, wx.EXPAND | wx.ALL, 5)
-        self.SetSizer(box)
+        p1.SetSizer(box1)
+        p2.SetSizer(box2)
 
         # - Initial data --------------------
 
         self.tc_text.Paste()
-        self.tc_patt.SetValue('')
         self.tc_repl.Enable(False)
+        parent.SplitVertically(p1, p2)
 
         # - Bind functions --------------------
 
@@ -147,10 +148,10 @@ class MyPanel(wx.Panel, Private):
             for widget in widgets:
                 widget.Bind(evt, self.OnMatch)
 
-        bt_prev.Bind(wx.EVT_BUTTON, lambda e: self.OnView(-1))
-        bt_next.Bind(wx.EVT_BUTTON, lambda e: self.OnView( 1))
+        self.bt_prev.Bind(wx.EVT_BUTTON, lambda e: self.OnView(-1))
+        self.bt_next.Bind(wx.EVT_BUTTON, lambda e: self.OnView( 1))
 
-        bt_apply.Bind(wx.EVT_BUTTON, self.OnApply)
+        self.bt_apply.Bind(wx.EVT_BUTTON, self.OnApply)
 
     def OnMatch(self, evt):
         text, patt = self.text, self.pattern
@@ -214,12 +215,17 @@ class MyFrame(wx.Frame):
     def __init__(self):
         wx.Frame.__init__(self, None, title='RegEx Matcher '+__ver__, size=(1200, 800))
 
-        self.panel = MyPanel(self)
-        self.panel.SetSize(self.GetClientSize())
+        sp = wx.SplitterWindow(self, -1, style=wx.SP_LIVE_UPDATE)
+
+        self.panel = MyPanel(sp)
+
+        sp.SetSashGravity(0.67)
+        sp.SetSize(self.GetClientSize())
+        sp.SetMinimumPaneSize(200)
+        sp.Bind(wx.EVT_SPLITTER_SASH_POS_CHANGING, lambda e: sp.SetSashGravity(sp.GetSashPosition() / sp.GetSize()[0]))
 
         self.Center()
         self.Show()
-
         self.Bind(wx.EVT_CHAR_HOOK, self.OnKeyPress)
 
     def OnKeyPress(self, evt):
