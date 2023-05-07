@@ -193,21 +193,16 @@ class MyPanel(wx.Panel, Private):
         dlg.Destroy()
 
     def OnMatch(self, evt):
+        text, patt = self.text, self.pattern
+        matchs = []
+
         try:
-            text, patt = self.text, self.pattern
-            self.tc_text.StartStyling(0)
-            self.tc_text.SetStyling(len(text.encode()), 0)
-            for m in re.finditer(patt, patt and text, re.M):
-                regs = m.regs[1:] or m.regs[:1]  # match whole group if sub-groups don't exist
-                for p1, p2 in regs:
-                    p1, p2 = [len(text[:p].encode()) for p in (p1, p2)]  # unicode index -> bytes index
-                    self.tc_text.StartStyling(p1)
-                    self.tc_text.SetStyling(p2 - p1, 1)
             if self.rb_regex.GetValue():
                 self.tc_repl.Disable()
                 results = []
                 for m in re.finditer(patt, patt and text, re.M):
                     results.append('\t'.join(m.groups() or [m.group()]))  # join sub-strings by '\t'
+                    matchs.append(m.regs[1:] or m.regs[:1])  # match whole group if sub-groups don't exist
             else:
                 self.tc_repl.Enable()
                 results = re.sub(patt, self.replace, text, 0, re.M).split('\n')
@@ -219,6 +214,19 @@ class MyPanel(wx.Panel, Private):
         except re.error as e:
             result = str(e)
         self.result = result
+
+        self.tc_text.StartStyling(0)
+        self.tc_text.SetStyling(len(text.encode()), 0)
+        if len(matchs) < 10000:
+            idxs = [0]
+            for c in text:
+                idxs.append(idxs[-1] + len(c.encode()))  # unicode index -> bytes index
+            for regs in matchs:
+                for p1, p2 in regs:
+                    p1, p2 = idxs[p1], idxs[p2]
+                    self.tc_text.StartStyling(p1)
+                    self.tc_text.SetStyling(p2 - p1, 1)
+
         if isinstance(evt, wx.Event):
             evt.Skip()
 
