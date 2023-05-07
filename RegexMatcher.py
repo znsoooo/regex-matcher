@@ -153,6 +153,7 @@ class MyPanel(wx.Panel, Private):
 
         # - Initial data --------------------
 
+        self.tc_text.Paste()
         self.tc_patt.SetValue('')
         self.tc_repl.Enable(False)
 
@@ -257,33 +258,17 @@ class MyFrame(wx.Frame):
 
         self.panel = MyPanel(self)
         self.panel.SetSize(self.GetClientSize())
-        self.log = 'log.txt'
 
-        self.OnOpen()
         self.Center()
         self.Show()
 
         self.Bind(wx.EVT_CHAR_HOOK, self.OnKeyPress)
-        self.Bind(wx.EVT_CLOSE, self.OnClose)
 
     def OnKeyPress(self, evt):
         if wx.WXK_ESCAPE == evt.GetKeyCode():
             self.Close()
         else:
             evt.Skip()
-
-    def OnOpen(self):
-        if os.path.isfile(self.log):
-            self.panel.text = ReadFile(self.log)
-
-    def OnClose(self, evt):
-        text = self.panel.text
-        if text:
-            with open(self.log, 'w', encoding='u8') as f:
-                f.write(text)
-        elif os.path.isfile(self.log):
-            os.remove(self.log)
-        evt.Skip()
 
 
 if __name__ == '__main__':
