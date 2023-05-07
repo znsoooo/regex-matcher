@@ -1,25 +1,9 @@
-import os
 import re
-import time
 
 import wx
 import wx.stc as stc
 
 __ver__ = 'v0.2.3'
-
-
-def ReadFile(path):
-    ext = os.path.splitext(path)[1].lower()
-    if ext == '.docx':
-        pass
-    else:
-        try:
-            with open(path, 'r', encoding='u8') as f:
-                text = f.read()
-        except UnicodeDecodeError:
-            with open(path, 'r') as f:
-                text = f.read()
-    return text
 
 
 class MyTextCtrl(stc.StyledTextCtrl):
@@ -105,8 +89,6 @@ class MyPanel(wx.Panel, Private):
         self.rb_regex   = wx.RadioButton(self, -1, 'RegEx:', style=wx.RB_GROUP)
         self.rb_replace = wx.RadioButton(self, -1, 'Replace:')
 
-        bt_open  = wx.Button(self, -1, 'Open',  size=(48, 24))
-        bt_save  = wx.Button(self, -1, 'Save',  size=(48, 24))
         bt_prev  = wx.Button(self, -1, '<',     size=(24, 24))
         bt_next  = wx.Button(self, -1, '>',     size=(24, 24))
         bt_apply = wx.Button(self, -1, 'Apply', size=(24, 24))
@@ -119,8 +101,6 @@ class MyPanel(wx.Panel, Private):
 
         box1 = wx.BoxSizer()
         box1.Add(TEXT('Text:'), 1, wx.ALIGN_CENTER)
-        box1.Add(bt_open, 0, wx.LEFT, 5)
-        box1.Add(bt_save, 0, wx.LEFT, 5)
 
         box2 = wx.BoxSizer()
         box2.Add(TEXT('Result:'), 1, wx.ALIGN_CENTER)
@@ -159,9 +139,6 @@ class MyPanel(wx.Panel, Private):
 
         # - Bind functions --------------------
 
-        bt_open.Bind(wx.EVT_BUTTON, self.OnOpen)
-        bt_save.Bind(wx.EVT_BUTTON, self.OnSave)
-
         for evt, *widgets in [(stc.EVT_STC_CHANGE, self.tc_text),
                               (wx.EVT_TEXT, self.tc_patt, self.tc_repl),
                               (wx.EVT_CHECKBOX, self.cb_sorted, self.cb_unique),
@@ -174,25 +151,6 @@ class MyPanel(wx.Panel, Private):
         bt_next.Bind(wx.EVT_BUTTON, lambda e: self.OnView( 1))
 
         bt_apply.Bind(wx.EVT_BUTTON, self.OnApply)
-
-    def OnOpen(self, evt):
-        dlg = wx.FileDialog(self, wildcard='Text file|*.txt|All file|*.*',
-                            style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST | wx.FD_MULTIPLE)
-        if dlg.ShowModal() == wx.ID_OK:
-            for path in dlg.GetPaths():
-                self.text += ReadFile(path) + '\n'
-            self.tc_text.SetFocus()
-            wx.CallAfter(self.tc_text.GotoLine, self.tc_text.GetLineCount())
-        dlg.Destroy()
-
-    def OnSave(self, evt):
-        dlg = wx.FileDialog(self, wildcard='Text file|*.txt', defaultFile=time.strftime('TXT_%Y%m%d_%H%M%S.txt'),
-                            style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
-        if dlg.ShowModal() == wx.ID_OK:
-            path = dlg.GetPath()
-            with open(path, 'w', encoding='u8') as f:
-                f.write(self.text)
-        dlg.Destroy()
 
     def OnMatch(self, evt):
         text, patt = self.text, self.pattern
