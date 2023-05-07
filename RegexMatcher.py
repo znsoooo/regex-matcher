@@ -35,6 +35,7 @@ class MyTextCtrl(stc.StyledTextCtrl):
         self.SetMargins(5, -5)
         self.SetMultipleSelection(True)
         self.SetTabWidth(4)
+        self.SetUseTabs(False)
         self.SetViewWhiteSpace(True)
         self.SetWrapMode(stc.STC_WRAP_CHAR)
 
