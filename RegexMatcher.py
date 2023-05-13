@@ -12,6 +12,7 @@ class MyTextCtrl(stc.StyledTextCtrl):
 
         self.StyleSetSpec(stc.STC_STYLE_DEFAULT, 'face:Courier New,size:11')
         self.StyleSetSpec(1, 'back:#FFFF00')
+        self.StyleSetSpec(2, 'back:#00FFFF')
         self.SetAdditionalSelectionTyping(True)
         self.SetEOLMode(stc.STC_EOL_LF)  # fix save file '\r\n' translate to '\r\r\n'
         self.SetMarginType(1, stc.STC_MARGIN_NUMBER)
@@ -192,10 +193,12 @@ class MyPanel(Private):
                 idxs = [0]
                 for c in string:
                     idxs.append(idxs[-1] + len(c.encode()))  # unicode index -> bytes index
+                style = 1
                 for p1, p2 in spans:
                     p1, p2 = idxs[p1], idxs[p2]
                     tc.StartStyling(p1)
-                    tc.SetStyling(p2 - p1, 1)
+                    tc.SetStyling(p2 - p1, style)
+                    style = 3 - style
 
     def OnView(self, direction):
         text, patt = self.text, self.pattern
