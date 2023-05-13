@@ -13,6 +13,7 @@ class MyTextCtrl(stc.StyledTextCtrl):
         self.StyleSetSpec(stc.STC_STYLE_DEFAULT, 'face:Courier New,size:11')
         self.StyleSetSpec(1, 'back:#FFFF00')
         self.StyleSetSpec(2, 'back:#00FFFF')
+
         self.SetAdditionalSelectionTyping(True)
         self.SetEOLMode(stc.STC_EOL_LF)  # fix save file '\r\n' translate to '\r\r\n'
         self.SetMarginType(1, stc.STC_MARGIN_NUMBER)
@@ -32,6 +33,25 @@ class MyTextCtrl(stc.StyledTextCtrl):
         lines = self.GetLineCount()
         width = len(str(lines)) * 9 + 5
         self.SetMarginWidth(1, width)
+
+    def SetUnicodeHighlights(self, spans):
+        text = self.GetValue()
+        self.StartStyling(0)
+        self.SetStyling(len(text.encode()), 0)
+        if spans and len(spans) < 10000:
+            idxs = [0]
+            for c in text:
+                idxs.append(idxs[-1] + len(c.encode()))  # unicode index -> bytes index
+            for i, (p1, p2) in enumerate(spans):
+                p1, p2 = idxs[p1], idxs[p2]
+                self.StartStyling(p1)
+                self.SetStyling(p2 - p1, (i % 2) + 1)
+
+    def SetUnicodeSelection(self, p1, p2):
+        text = self.GetValue()
+        p1, p2 = (len(text[:p].encode()) for p in (p1, p2))  # unicode index -> bytes index
+        self.ShowPosition(p1)
+        self.SetSelection(p1, p2)
 
     def StartStyling(self, start):
         try:
@@ -158,19 +178,27 @@ class MyPanel(Private):
         if isinstance(evt, wx.Event):
             evt.Skip()
         finds, repls = [], []
-        text, patt = self.text, self.pattern
-        result, repl = '', self.replace
+        text, patt = self.text, self.pattern or '(?=A)(?=Z)'  # non-empty pattern or an impossible pattern
         try:
             finds = [m.span() for m in re.finditer(patt, text, re.M)]
             if self.rb_regex.GetValue():
                 self.tc_repl.Disable()
                 results = []
-                for m in re.finditer(patt, patt and text, re.M):
+                offset = 0
+                for m in re.finditer(patt, text, re.M):
                     results.append('\t'.join(m.groups() or [m.group()]))  # join sub-strings by '\t'
+                    length = len(results[-1])
+                    repls.append((offset, offset + length))
+                    offset += length + 1
             else:
                 self.tc_repl.Enable()
-                result = re.sub(patt, lambda m: repls.append(m.expand(repl)) or repls[-1], text, 0, re.M)
-                results = result.split('\n')
+                repl = self.replace
+                results = re.sub(patt, lambda m: repls.append(m.expand(repl)) or repls[-1], text, 0, re.M).split('\n')
+                offset = 0
+                for i, ((p1, p2), repl) in enumerate(zip(finds, repls)):
+                    diff = len(repl) - (p2 - p1)
+                    repls[i] = (p1 + offset, p2 + offset + diff)
+                    offset += diff
             if self.cb_unique.GetValue():
                 results = dict.fromkeys(results)
             if self.cb_sorted.GetValue():
@@ -179,41 +207,27 @@ class MyPanel(Private):
         except re.error as e:
             self.result = str(e)
 
+        self.tc_text.SetUnicodeHighlights(finds)
         if self.cb_unique.GetValue() or self.cb_sorted.GetValue():
             repls.clear()
-        offset = 0
-        for i, ((p1, p2), repl) in enumerate(zip(finds, repls)):
-            diff = len(repl) - (p2 - p1)
-            repls[i] = (p1 + offset, p2 + offset + diff)
-            offset += diff
-        for tc, string, spans in [(self.tc_text, text, finds), (self.tc_res, result, repls)]:
-            tc.StartStyling(0)
-            tc.SetStyling(len(string.encode()), 0)
-            if spans and len(spans) < 10000:
-                idxs = [0]
-                for c in string:
-                    idxs.append(idxs[-1] + len(c.encode()))  # unicode index -> bytes index
-                style = 1
-                for p1, p2 in spans:
-                    p1, p2 = idxs[p1], idxs[p2]
-                    tc.StartStyling(p1)
-                    tc.SetStyling(p2 - p1, style)
-                    style = 3 - style
+        self.tc_res.SetUnicodeHighlights(repls)
+
+        return finds, repls
 
     def OnView(self, direction):
-        text, patt = self.text, self.pattern
+        text, result = self.text, self.result
+        finds, repls = self.OnMatch(-1)
         pos = self.tc_text.GetInsertionPoint()
         pos = len(text.encode()[:pos].decode())  # bytes index -> unicode index
-        matchs = [m.span() for m in re.finditer(patt, patt and text, re.M)]
-        if not matchs:
-            return
-        if direction > 0:
-            p1, p2 = min([span for span in matchs if span[1] > pos] or [matchs[0]])
-        else:
-            p1, p2 = max([span for span in matchs if span[1] < pos] or [matchs[-1]])
-        p1, p2 = [len(text[:p].encode()) for p in (p1, p2)]  # unicode index -> bytes index
-        self.tc_text.ShowPosition(p1)
-        self.tc_text.SetSelection(p1, p2)
+        if finds:
+            if direction > 0:
+                p1, p2 = min([span for span in finds if span[1] > pos] or [finds[0]])
+            else:
+                p1, p2 = max([span for span in finds if span[1] < pos] or [finds[-1]])
+            self.tc_text.SetUnicodeSelection(p1, p2)
+            if repls:
+                p1, p2 = repls[finds.index((p1, p2))]
+                self.tc_res.SetUnicodeSelection(p1, p2)
 
     def OnApply(self, evt):
         self.text = self.result
