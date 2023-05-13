@@ -154,42 +154,48 @@ class MyPanel(Private):
         self.bt_apply.Bind(wx.EVT_BUTTON, self.OnApply)
 
     def OnMatch(self, evt):
+        if isinstance(evt, wx.Event):
+            evt.Skip()
+        finds, repls = [], []
         text, patt = self.text, self.pattern
-        matchs = []
-
+        result, repl = '', self.replace
         try:
+            finds = [m.span() for m in re.finditer(patt, text, re.M)]
             if self.rb_regex.GetValue():
                 self.tc_repl.Disable()
                 results = []
                 for m in re.finditer(patt, patt and text, re.M):
                     results.append('\t'.join(m.groups() or [m.group()]))  # join sub-strings by '\t'
-                    matchs.append(m.regs[1:] or m.regs[:1])  # match whole group if sub-groups don't exist
             else:
                 self.tc_repl.Enable()
-                results = re.sub(patt, self.replace, text, 0, re.M).split('\n')
+                result = re.sub(patt, lambda m: repls.append(m.expand(repl)) or repls[-1], text, 0, re.M)
+                results = result.split('\n')
             if self.cb_unique.GetValue():
                 results = dict.fromkeys(results)
             if self.cb_sorted.GetValue():
                 results = sorted(results)
-            result = '\n'.join(results)
+            self.result = '\n'.join(results)
         except re.error as e:
-            result = str(e)
-        self.result = result
+            self.result = str(e)
 
-        self.tc_text.StartStyling(0)
-        self.tc_text.SetStyling(len(text.encode()), 0)
-        if len(matchs) < 10000:
-            idxs = [0]
-            for c in text:
-                idxs.append(idxs[-1] + len(c.encode()))  # unicode index -> bytes index
-            for regs in matchs:
-                for p1, p2 in regs:
+        if self.cb_unique.GetValue() or self.cb_sorted.GetValue():
+            repls.clear()
+        offset = 0
+        for i, ((p1, p2), repl) in enumerate(zip(finds, repls)):
+            diff = len(repl) - (p2 - p1)
+            repls[i] = (p1 + offset, p2 + offset + diff)
+            offset += diff
+        for tc, string, spans in [(self.tc_text, text, finds), (self.tc_res, result, repls)]:
+            tc.StartStyling(0)
+            tc.SetStyling(len(string.encode()), 0)
+            if spans and len(spans) < 10000:
+                idxs = [0]
+                for c in string:
+                    idxs.append(idxs[-1] + len(c.encode()))  # unicode index -> bytes index
+                for p1, p2 in spans:
                     p1, p2 = idxs[p1], idxs[p2]
-                    self.tc_text.StartStyling(p1)
-                    self.tc_text.SetStyling(p2 - p1, 1)
-
-        if isinstance(evt, wx.Event):
-            evt.Skip()
+                    tc.StartStyling(p1)
+                    tc.SetStyling(p2 - p1, 1)
 
     def OnView(self, direction):
         text, patt = self.text, self.pattern
