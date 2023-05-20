@@ -95,9 +95,11 @@ class Private:
 
 
 class MyPanel(Private):
-    def __init__(self, parent):
-        p1 = wx.Panel(parent)
-        p2 = wx.Panel(parent)
+    def __init__(self, parent, sp):
+        self.parent = parent
+
+        p1 = wx.Panel(sp)
+        p2 = wx.Panel(sp)
 
         # - Add widgets --------------------
 
@@ -120,7 +122,7 @@ class MyPanel(Private):
 
         # - Set layout --------------------
 
-        gap = parent.GetSashSize()
+        gap = sp.GetSashSize()
 
         box1 = wx.BoxSizer(wx.VERTICAL)
         flags1 = wx.EXPAND | wx.TOP | wx.LEFT
@@ -156,8 +158,7 @@ class MyPanel(Private):
         # - Initial data --------------------
 
         self.tc_text.Paste()
-        self.tc_repl.Enable(False)
-        parent.SplitVertically(p1, p2)
+        sp.SplitVertically(p1, p2)
 
         # - Bind functions --------------------
 
@@ -207,6 +208,7 @@ class MyPanel(Private):
         except re.error as e:
             self.result = str(e)
 
+        self.SetTitle(len(finds))
         self.tc_text.SetUnicodeHighlights(finds)
         if self.cb_unique.GetValue() or self.cb_sorted.GetValue():
             repls.clear()
@@ -225,22 +227,33 @@ class MyPanel(Private):
             else:
                 p1, p2 = max([span for span in finds if span[1] < pos] or [finds[-1]])
             self.tc_text.SetUnicodeSelection(p1, p2)
+            index = finds.index((p1, p2))
+            self.SetTitle(len(finds), index + 1)
             if repls:
-                p1, p2 = repls[finds.index((p1, p2))]
+                p1, p2 = repls[index]
                 self.tc_res.SetUnicodeSelection(p1, p2)
 
     def OnApply(self, evt):
         self.text = self.result
         self.OnMatch(-1)
 
+    def SetTitle(self, total=0, idx=0):
+        if not total:
+            info = ''
+        elif not idx:
+            info = '%d - ' % total
+        else:
+            info = '%d/%d - ' % (idx, total)
+        self.parent.SetTitle(info + 'RegEx Matcher ' + __ver__)
+
 
 class MyFrame(wx.Frame):
     def __init__(self):
-        wx.Frame.__init__(self, None, title='RegEx Matcher '+__ver__, size=(1200, 800))
+        wx.Frame.__init__(self, None, size=(1200, 800))
 
         sp = wx.SplitterWindow(self, -1, style=wx.SP_LIVE_UPDATE)
 
-        self.panel = MyPanel(sp)
+        self.panel = MyPanel(self, sp)
 
         sp.SetSashGravity(0.67)
         sp.SetSize(self.GetClientSize())
