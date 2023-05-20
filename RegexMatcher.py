@@ -98,6 +98,8 @@ class MyPanel(Private):
     def __init__(self, parent, sp):
         self.parent = parent
 
+        self.mode = 'regex'
+
         p1 = wx.Panel(sp)
         p2 = wx.Panel(sp)
 
@@ -110,8 +112,6 @@ class MyPanel(Private):
 
         self.cb_sorted  = wx.CheckBox(p2, -1, 'Sorted')
         self.cb_unique  = wx.CheckBox(p2, -1, 'Unique')
-        self.rb_regex   = wx.RadioButton(p2, -1, 'RegEx:', style=wx.RB_GROUP)
-        self.rb_replace = wx.RadioButton(p2, -1, 'Replace:')
 
         self.bt_prev  = wx.Button(p2, -1, '<',     size=(24, 24))
         self.bt_next  = wx.Button(p2, -1, '>',     size=(24, 24))
@@ -119,6 +119,8 @@ class MyPanel(Private):
 
         self.st_text = wx.StaticText(p1, -1, 'Text:')
         self.st_res  = wx.StaticText(p2, -1, 'Result:')
+        self.st_patt = wx.StaticText(p2, -1, 'RegEx:')
+        self.st_repl = wx.StaticText(p2, -1, 'Replace:')
 
         # - Set layout --------------------
 
@@ -136,11 +138,11 @@ class MyPanel(Private):
         box21.Add(self.cb_unique,  0, wx.ALIGN_CENTER)
 
         box22 = wx.GridBagSizer(vgap=gap, hgap=gap)
-        box22.Add(self.rb_regex,   (0, 0), (1, 1), wx.EXPAND)
+        box22.Add(self.st_patt,    (0, 0), (1, 1), wx.ALIGN_CENTRE_VERTICAL)
         box22.Add(self.tc_patt,    (0, 1), (1, 1), wx.EXPAND)
         box22.Add(self.bt_prev,    (0, 2), (1, 1), wx.EXPAND)
         box22.Add(self.bt_next,    (0, 3), (1, 1), wx.EXPAND)
-        box22.Add(self.rb_replace, (1, 0), (1, 1), wx.EXPAND)
+        box22.Add(self.st_repl,    (1, 0), (1, 1), wx.ALIGN_CENTRE_VERTICAL)
         box22.Add(self.tc_repl,    (1, 1), (1, 1), wx.EXPAND)
         box22.Add(self.bt_apply,   (1, 2), (1, 2), wx.EXPAND)
         box22.AddGrowableCol(1)
@@ -165,7 +167,6 @@ class MyPanel(Private):
         for evt, *widgets in [(stc.EVT_STC_CHANGE, self.tc_text),
                               (wx.EVT_TEXT, self.tc_patt, self.tc_repl),
                               (wx.EVT_CHECKBOX, self.cb_sorted, self.cb_unique),
-                              (wx.EVT_RADIOBUTTON, self.rb_regex, self.rb_replace),
                               (wx.EVT_SET_FOCUS, self.tc_text, self.tc_patt, self.tc_repl)]:
             for widget in widgets:
                 widget.Bind(evt, self.OnMatch)
@@ -178,12 +179,17 @@ class MyPanel(Private):
     def OnMatch(self, evt):
         if isinstance(evt, wx.Event):
             evt.Skip()
+
+        if self.tc_patt.HasFocus():
+            self.mode = 'regex'
+        elif self.tc_repl.HasFocus():
+            self.mode = 'replace'
+
         finds, repls = [], []
         text, patt = self.text, self.pattern or '(?=A)(?=Z)'  # non-empty pattern or an impossible pattern
         try:
             finds = [m.span() for m in re.finditer(patt, text, re.M)]
-            if self.rb_regex.GetValue():
-                self.tc_repl.Disable()
+            if self.mode == 'regex':
                 results = []
                 offset = 0
                 for m in re.finditer(patt, text, re.M):
@@ -192,7 +198,6 @@ class MyPanel(Private):
                     repls.append((offset, offset + length))
                     offset += length + 1
             else:
-                self.tc_repl.Enable()
                 repl = self.replace
                 results = re.sub(patt, lambda m: repls.append(m.expand(repl)) or repls[-1], text, 0, re.M).split('\n')
                 offset = 0
