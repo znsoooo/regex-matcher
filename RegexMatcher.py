@@ -107,11 +107,12 @@ class MyPanel(Private):
 
         self.tc_text = MyTextCtrl(p1)
         self.tc_res  = MyTextCtrl(p2)
-        self.tc_patt = wx.TextCtrl(p2, size=(20, -1))
-        self.tc_repl = wx.TextCtrl(p2, size=(20, -1))
 
         self.cb_sorted  = wx.CheckBox(p2, -1, 'Sorted')
         self.cb_unique  = wx.CheckBox(p2, -1, 'Unique')
+
+        self.tc_patt = wx.TextCtrl(p2, size=(20, -1))
+        self.tc_repl = wx.TextCtrl(p2, size=(20, -1))
 
         self.bt_prev  = wx.Button(p2, -1, '<',     size=(24, 24))
         self.bt_next  = wx.Button(p2, -1, '>',     size=(24, 24))
