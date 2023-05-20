@@ -174,8 +174,21 @@ class MyPanel(Private):
 
         self.bt_prev.Bind(wx.EVT_BUTTON, lambda e: self.OnView(-1))
         self.bt_next.Bind(wx.EVT_BUTTON, lambda e: self.OnView( 1))
+        self.tc_patt.Bind(wx.EVT_MOUSEWHEEL, lambda e: self.OnView(1 if e.GetWheelRotation() < 0 else -1))
+        self.tc_repl.Bind(wx.EVT_MOUSEWHEEL, lambda e: self.OnView(1 if e.GetWheelRotation() < 0 else -1))
+        self.tc_patt.Bind(wx.EVT_CHAR, self.OnKeyDown)
+        self.tc_repl.Bind(wx.EVT_CHAR, self.OnKeyDown)
 
         self.bt_apply.Bind(wx.EVT_BUTTON, self.OnApply)
+
+    def OnKeyDown(self, evt):
+        code = evt.GetKeyCode()
+        if code in (wx.WXK_UP, wx.WXK_PAGEUP):
+            self.OnView(-1)
+        elif code in (wx.WXK_DOWN, wx.WXK_PAGEDOWN):
+            self.OnView(1)
+        else:
+            evt.Skip()
 
     def OnMatch(self, evt):
         if isinstance(evt, wx.Event):
