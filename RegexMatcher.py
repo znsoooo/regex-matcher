@@ -60,41 +60,7 @@ class MyTextCtrl(stc.StyledTextCtrl):
             super().StartStyling(start, 0xFFFF)
 
 
-class Private:
-    @property
-    def text(self):
-        return self.tc_text.GetValue()
-
-    @text.setter
-    def text(self, value):
-        self.tc_text.SetValue(str(value))
-
-    @property
-    def result(self):
-        return self.tc_res.GetValue()
-
-    @result.setter
-    def result(self, value):
-        self.tc_res.SetValue(str(value))
-
-    @property
-    def pattern(self):
-        return self.tc_patt.GetValue()
-
-    @pattern.setter
-    def pattern(self, value):
-        self.tc_patt.SetValue(str(value))
-
-    @property
-    def replace(self):
-        return self.tc_repl.GetValue()
-
-    @replace.setter
-    def replace(self, value):
-        self.tc_repl.SetValue(str(value))
-
-
-class MyPanel(Private):
+class MyPanel:
     def __init__(self, parent, sp):
         self.parent = parent
 
@@ -179,7 +145,7 @@ class MyPanel(Private):
         self.tc_patt.Bind(wx.EVT_CHAR, self.OnKeyDown)
         self.tc_repl.Bind(wx.EVT_CHAR, self.OnKeyDown)
 
-        self.bt_apply.Bind(wx.EVT_BUTTON, self.OnApply)
+        self.bt_apply.Bind(wx.EVT_BUTTON, lambda e: self.tc_text.SetValue(self.tc_res.GetValue()))
 
     def OnKeyDown(self, evt):
         code = evt.GetKeyCode()
@@ -199,8 +165,10 @@ class MyPanel(Private):
         elif self.tc_repl.HasFocus():
             self.mode = 'replace'
 
+        text = self.tc_text.GetValue()
+        patt = self.tc_patt.GetValue() or '(?=A)(?=Z)'  # non-empty pattern or an impossible pattern
+        repl = self.tc_repl.GetValue()
         finds, repls = [], []
-        text, patt = self.text, self.pattern or '(?=A)(?=Z)'  # non-empty pattern or an impossible pattern
         try:
             finds = [m.span() for m in re.finditer(patt, text, re.M)]
             if self.mode == 'regex':
@@ -212,7 +180,6 @@ class MyPanel(Private):
                     repls.append((offset, offset + length))
                     offset += length + 1
             else:
-                repl = self.replace
                 results = re.sub(patt, lambda m: repls.append(m.expand(repl)) or repls[-1], text, 0, re.M).split('\n')
                 offset = 0
                 for i, ((p1, p2), repl) in enumerate(zip(finds, repls)):
@@ -223,9 +190,10 @@ class MyPanel(Private):
                 results = dict.fromkeys(results)
             if self.cb_sorted.GetValue():
                 results = sorted(results)
-            self.result = '\n'.join(results)
+            result = '\n'.join(results)
         except re.error as e:
-            self.result = str(e)
+            result = str(e)
+        self.tc_res.SetValue(result)
 
         self.SetTitle(len(finds))
         self.tc_text.SetUnicodeHighlights(finds)
@@ -236,10 +204,9 @@ class MyPanel(Private):
         return finds, repls
 
     def OnView(self, direction):
-        text, result = self.text, self.result
         finds, repls = self.OnMatch(-1)
         pos = self.tc_text.GetInsertionPoint()
-        pos = len(text.encode()[:pos].decode())  # bytes index -> unicode index
+        pos = len(self.tc_text.GetValue().encode()[:pos].decode())  # bytes index -> unicode index
         if finds:
             if direction > 0:
                 p1, p2 = min([span for span in finds if span[1] > pos] or [finds[0]])
@@ -251,10 +218,6 @@ class MyPanel(Private):
             if repls:
                 p1, p2 = repls[index]
                 self.tc_res.SetUnicodeSelection(p1, p2)
-
-    def OnApply(self, evt):
-        self.text = self.result
-        self.OnMatch(-1)
 
     def SetTitle(self, total=0, idx=0):
         if not total:
