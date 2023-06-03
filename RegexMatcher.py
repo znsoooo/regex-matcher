@@ -126,7 +126,6 @@ class MyPanel:
 
         # - Initial data --------------------
 
-        self.tc_text.Paste()
         sp.SplitVertically(p1, p2)
 
         # - Bind functions --------------------
@@ -242,15 +241,33 @@ class MyFrame(wx.Frame):
         sp.SetMinimumPaneSize(200)
         sp.Bind(wx.EVT_SPLITTER_SASH_POS_CHANGING, lambda e: sp.SetSashGravity(sp.GetSashPosition() / sp.GetSize()[0]))
 
+        self.OnOpen()
         self.Center()
         self.Show()
+
         self.Bind(wx.EVT_CHAR_HOOK, self.OnKeyPress)
+        self.Bind(wx.EVT_CLOSE, self.OnClose)
 
     def OnKeyPress(self, evt):
         if wx.WXK_ESCAPE == evt.GetKeyCode():
             self.Close()
         else:
             evt.Skip()
+
+    def OnOpen(self):
+        with open('log.txt', 'a+', encoding='u8') as f:
+            f.seek(0)
+            log = f.read()
+        pnl = self.panel
+        for tc, text in zip((pnl.tc_patt, pnl.tc_repl, pnl.tc_text), log.split('\n\n', 2) + ['', '']):
+            tc.SetValue(text)
+
+    def OnClose(self, evt):
+        pnl = self.panel
+        log = '\n\n'.join(tc.GetValue() for tc in (pnl.tc_patt, pnl.tc_repl, pnl.tc_text))
+        with open('log.txt', 'w', encoding='u8') as f:
+            f.write(log)
+        evt.Skip()
 
 
 if __name__ == '__main__':
