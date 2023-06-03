@@ -174,8 +174,8 @@ class MyPanel:
             if self.mode == 'regex':
                 results = []
                 offset = 0
-                for m in re.finditer(patt, text, re.M):
-                    results.append('\t'.join(m.groups() or [m.group()]))  # join sub-strings by '\t'
+                for m in re.findall(patt, text, re.M):
+                    results.append(m if isinstance(m, str) else '\t'.join(m))  # join sub-strings by '\t'
                     length = len(results[-1])
                     repls.append((offset, offset + length))
                     offset += length + 1
