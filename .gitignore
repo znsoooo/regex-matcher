@@ -1,0 +1,8 @@
+# cache file
+/__pycache__/*
+/log.txt
+
+# build file
+/*.spec
+/build/*
+/dist/*
