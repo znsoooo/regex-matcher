@@ -76,6 +76,7 @@ class MyPanel:
 
         self.cb_sorted = wx.CheckBox(p2, -1, 'Sorted')
         self.cb_unique = wx.CheckBox(p2, -1, 'Unique')
+        self.cb_reverse = wx.CheckBox(p2, -1, 'Reverse')
 
         self.tc_patt = wx.TextCtrl(p2, size=(20, -1))
         self.tc_repl = wx.TextCtrl(p2, size=(20, -1))
@@ -100,9 +101,10 @@ class MyPanel:
         box1.Add((0, 0),       0, flags1, gap)
 
         box21 = wx.BoxSizer()
-        box21.Add(self.st_res,    1, wx.ALIGN_CENTER)
-        box21.Add(self.cb_sorted, 0, wx.ALIGN_CENTER)
-        box21.Add(self.cb_unique, 0, wx.ALIGN_CENTER)
+        box21.Add(self.st_res,     1, wx.ALIGN_CENTER)
+        box21.Add(self.cb_sorted,  0, wx.ALIGN_CENTER)
+        box21.Add(self.cb_unique,  0, wx.ALIGN_CENTER)
+        box21.Add(self.cb_reverse, 0, wx.ALIGN_CENTER)
 
         box22 = wx.GridBagSizer(vgap=gap, hgap=gap)
         box22.Add(self.st_patt,  (0, 0), (1, 1), wx.ALIGN_CENTRE_VERTICAL)
@@ -132,7 +134,7 @@ class MyPanel:
 
         for evt, *widgets in [(stc.EVT_STC_CHANGE, self.tc_text),
                               (wx.EVT_TEXT, self.tc_patt, self.tc_repl),
-                              (wx.EVT_CHECKBOX, self.cb_sorted, self.cb_unique),
+                              (wx.EVT_CHECKBOX, self.cb_sorted, self.cb_unique, self.cb_reverse),
                               (wx.EVT_SET_FOCUS, self.tc_text, self.tc_patt, self.tc_repl)]:
             for widget in widgets:
                 widget.Bind(evt, self.OnMatch)
@@ -189,6 +191,8 @@ class MyPanel:
                 results = dict.fromkeys(results)
             if self.cb_sorted.GetValue():
                 results = sorted(results)
+            if self.cb_reverse.GetValue():
+                results = reversed(results)
             result = '\n'.join(results)
         except re.error as e:
             result = str(e)
@@ -196,7 +200,7 @@ class MyPanel:
 
         self.SetTitle(len(finds))
         self.tc_text.SetUnicodeHighlights(finds)
-        if self.cb_unique.GetValue() or self.cb_sorted.GetValue():
+        if self.cb_unique.GetValue() or self.cb_sorted.GetValue() or self.cb_reverse.GetValue():
             repls.clear()
         self.tc_res.SetUnicodeHighlights(repls)
 
