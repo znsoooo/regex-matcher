@@ -74,6 +74,8 @@ class MyPanel:
         self.tc_text = MyTextCtrl(p1)
         self.tc_res  = MyTextCtrl(p2)
 
+        self.cb_wrap = wx.CheckBox(p1, -1, 'Wrap')
+        self.cb_wrap.SetValue(True)
         self.cb_sorted = wx.CheckBox(p2, -1, 'Sorted')
         self.cb_unique = wx.CheckBox(p2, -1, 'Unique')
         self.cb_reverse = wx.CheckBox(p2, -1, 'Reverse')
@@ -94,9 +96,13 @@ class MyPanel:
 
         gap = sp.GetSashSize()
 
+        box11 = wx.BoxSizer()
+        box11.Add(self.st_text, 1, wx.ALIGN_CENTER)
+        box11.Add(self.cb_wrap, 0, wx.ALIGN_CENTER)
+
         box1 = wx.BoxSizer(wx.VERTICAL)
         flags1 = wx.EXPAND | wx.TOP | wx.LEFT
-        box1.Add(self.st_text, 0, flags1, gap)
+        box1.Add(box11,        0, flags1, gap)
         box1.Add(self.tc_text, 1, flags1, gap)
         box1.Add((0, 0),       0, flags1, gap)
 
@@ -146,6 +152,7 @@ class MyPanel:
         self.tc_patt.Bind(wx.EVT_CHAR, self.OnKeyDown)
         self.tc_repl.Bind(wx.EVT_CHAR, self.OnKeyDown)
 
+        self.cb_wrap.Bind(wx.EVT_CHECKBOX, self.OnWrap)
         self.bt_apply.Bind(wx.EVT_BUTTON, lambda e: self.tc_text.SetValue(self.tc_res.GetValue()))
 
     def OnKeyDown(self, evt):
@@ -221,6 +228,11 @@ class MyPanel:
             if repls:
                 p1, p2 = repls[index]
                 self.tc_res.SetUnicodeSelection(p1, p2)
+
+    def OnWrap(self, evt):
+        wrap_mode = stc.STC_WRAP_CHAR if evt.GetSelection() else stc.STC_WRAP_NONE
+        self.tc_text.SetWrapMode(wrap_mode)
+        self.tc_res.SetWrapMode(wrap_mode)
 
     def SetTitle(self, total=0, idx=0):
         if not total:
