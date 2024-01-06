@@ -6,6 +6,11 @@ import wx.stc as stc
 __ver__ = 'v1.1.0'
 
 
+def escape(text):
+    table = {i: '\\' + c for i, c in zip(b'()[{?*+|^$\\.\t\n\r\v\f', '()[{?*+|^$\\.tnrvf')}
+    return text.translate(table)
+
+
 class MyTextCtrl(stc.StyledTextCtrl):
     def __init__(self, parent):
         stc.StyledTextCtrl.__init__(self, parent)
@@ -149,17 +154,29 @@ class MyPanel:
         self.bt_next.Bind(wx.EVT_BUTTON, lambda e: self.OnView( 1))
         self.tc_patt.Bind(wx.EVT_MOUSEWHEEL, lambda e: self.OnView(1 if e.GetWheelRotation() < 0 else -1))
         self.tc_repl.Bind(wx.EVT_MOUSEWHEEL, lambda e: self.OnView(1 if e.GetWheelRotation() < 0 else -1))
-        self.tc_patt.Bind(wx.EVT_CHAR, self.OnKeyDown)
-        self.tc_repl.Bind(wx.EVT_CHAR, self.OnKeyDown)
+        self.tc_patt.Bind(wx.EVT_KEY_DOWN, self.OnText34KeyDown)
+        self.tc_repl.Bind(wx.EVT_KEY_DOWN, self.OnText34KeyDown)
+
+        self.tc_text.Bind(wx.EVT_KEY_DOWN, self.OnText12KeyDown)
+        self.tc_res .Bind(wx.EVT_KEY_DOWN, self.OnText12KeyDown)
 
         self.cb_wrap.Bind(wx.EVT_CHECKBOX, self.OnWrap)
         self.bt_apply.Bind(wx.EVT_BUTTON, lambda e: self.tc_text.SetValue(self.tc_res.GetValue()))
 
-    def OnKeyDown(self, evt):
+    def OnText12KeyDown(self, evt):
+        if wx.MOD_CONTROL == evt.GetModifiers() and ord('F') == evt.GetKeyCode():
+            selected = evt.GetEventObject().GetSelectedText()
+            pattern = escape(selected)
+            self.tc_patt.SetValue(pattern)
+            self.tc_patt.SetFocus()
+            self.tc_patt.SelectAll()
+        evt.Skip()
+
+    def OnText34KeyDown(self, evt):
         code = evt.GetKeyCode()
-        if code in (wx.WXK_UP, wx.WXK_PAGEUP):
+        if code in [wx.WXK_UP, wx.WXK_PAGEUP]:
             self.OnView(-1)
-        elif code in (wx.WXK_DOWN, wx.WXK_PAGEDOWN):
+        elif code in [wx.WXK_DOWN, wx.WXK_PAGEDOWN]:
             self.OnView(1)
         else:
             evt.Skip()
