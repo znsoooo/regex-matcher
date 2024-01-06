@@ -3,7 +3,7 @@ import re
 import wx
 import wx.stc as stc
 
-__ver__ = 'v1.0.0'
+__ver__ = 'v1.1.0'
 
 
 class MyTextCtrl(stc.StyledTextCtrl):
