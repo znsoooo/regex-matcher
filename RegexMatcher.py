@@ -3,7 +3,8 @@ import re
 import wx
 import wx.stc as stc
 
-__ver__ = 'v1.1.0'
+__version__ = 'v1.1.0'
+__title__ = 'RegEx Matcher ' + __version__
 
 
 def escape(text):
@@ -93,7 +94,7 @@ class MyPanel:
         self.bt_apply = wx.Button(p2, -1, 'Apply', size=(24, 24))
 
         self.st_text = wx.StaticText(p1, -1, 'Text:')
-        self.st_res  = wx.StaticText(p2, -1, 'Result:')
+        self.st_res  = wx.StaticText(p2, -1, 'Results:')
         self.st_patt = wx.StaticText(p2, -1, 'RegEx:')
         self.st_repl = wx.StaticText(p2, -1, 'Replace:')
 
@@ -193,9 +194,10 @@ class MyPanel:
         text = self.tc_text.GetValue()
         patt = self.tc_patt.GetValue() or '(?=A)(?=Z)'  # non-empty pattern or an impossible pattern
         repl = self.tc_repl.GetValue()
-        finds, repls = [], []
+        finds = self.finds = []
+        repls = self.repls = []
         try:
-            finds = [m.span() for m in re.finditer(patt, text, re.M)]
+            finds += [m.span() for m in re.finditer(patt, text, re.M)]
             if self.mode == 'regex':
                 results = []
                 offset = 0
@@ -205,7 +207,8 @@ class MyPanel:
                     repls.append((offset, offset + length))
                     offset += length + 1
             else:
-                results = re.sub(patt, lambda m: repls.append(m.expand(repl)) or repls[-1], text, 0, re.M).split('\n')
+                callback = lambda m: repls.append(m.expand(repl)) or repls[-1]
+                results = re.sub(patt, callback, text, 0, re.M).split('\n')
                 offset = 0
                 for i, ((p1, p2), repl) in enumerate(zip(finds, repls)):
                     diff = len(repl) - (p2 - p1)
@@ -222,16 +225,14 @@ class MyPanel:
             result = str(e)
         self.tc_res.SetValue(result)
 
-        self.SetTitle(len(finds))
+        self.SetSummary(len(finds))
         self.tc_text.SetUnicodeHighlights(finds)
         if self.cb_unique.GetValue() or self.cb_sorted.GetValue() or self.cb_reverse.GetValue():
             repls.clear()
         self.tc_res.SetUnicodeHighlights(repls)
 
-        return finds, repls
-
     def OnView(self, direction):
-        finds, repls = self.OnMatch(-1)
+        finds, repls = self.finds, self.repls
         pos = self.tc_text.GetInsertionPoint()
         pos = len(self.tc_text.GetValue().encode()[:pos].decode())  # bytes index -> unicode index
         if finds:
@@ -241,7 +242,7 @@ class MyPanel:
                 p1, p2 = max([span for span in finds if span[1] < pos] or [finds[-1]])
             self.tc_text.SetUnicodeSelection(p1, p2)
             index = finds.index((p1, p2))
-            self.SetTitle(len(finds), index + 1)
+            self.SetSummary(len(finds), index + 1)
             if repls:
                 p1, p2 = repls[index]
                 self.tc_res.SetUnicodeSelection(p1, p2)
@@ -251,14 +252,12 @@ class MyPanel:
         self.tc_text.SetWrapMode(wrap_mode)
         self.tc_res.SetWrapMode(wrap_mode)
 
-    def SetTitle(self, total=0, idx=0):
-        if not total:
-            info = ''
-        elif not idx:
-            info = '%d - ' % total
-        else:
-            info = '%d/%d - ' % (idx, total)
-        self.parent.SetTitle(info + 'RegEx Matcher ' + __ver__)
+    def SetSummary(self, total=0, current=0):
+        patt = self.tc_patt.GetValue()
+        title = patt.strip() + ' - ' + __title__ if patt else __title__
+        self.parent.SetTitle(title)
+        summary = '' if patt == '' else f'{total}' if current == 0 else f'{current}/{total}'
+        self.st_res.SetLabel('Results: ' + summary)
 
 
 class MyFrame(wx.Frame):
