@@ -270,7 +270,7 @@ class MyFrame(wx.Frame):
 
         sp.SetSashGravity(0.67)
         sp.SetSize(self.GetClientSize())
-        sp.SetMinimumPaneSize(200)
+        sp.SetMinimumPaneSize(20)
         sp.Bind(wx.EVT_SPLITTER_SASH_POS_CHANGING, lambda e: sp.SetSashGravity(sp.GetSashPosition() / sp.GetSize()[0]))
 
         self.OnOpen()
