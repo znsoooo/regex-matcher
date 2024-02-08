@@ -200,6 +200,15 @@ class MyPanel:
             self.OnView(-1)
         elif code in [wx.WXK_DOWN, wx.WXK_PAGEDOWN]:
             self.OnView(1)
+        elif evt.ControlDown() and code == ord('G') and self.tc_patt.HasFocus() and self.tc_patt.GetStringSelection():
+            text = self.tc_patt.GetValue()
+            p1, p2 = self.tc_patt.GetSelection()
+            if not evt.ShiftDown():
+                self.tc_patt.SetValue(text[:p1] + '(' + text[p1:p2] + ')' + text[p2:])
+                self.tc_patt.SetSelection(p1, p2 + 2)
+            elif text[p1] == '(' and text[p2-1] == ')':
+                self.tc_patt.SetValue(text[:p1] + text[p1+1:p2-1] + text[p2:])
+                self.tc_patt.SetSelection(p1, p2 - 2)
         else:
             evt.Skip()
 
