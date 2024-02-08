@@ -31,11 +31,20 @@ class MyTextCtrl(stc.StyledTextCtrl):
         self.SetViewWhiteSpace(True)
         self.SetWrapMode(stc.STC_WRAP_CHAR)
 
-        self.Bind(stc.EVT_STC_CHANGE, self.OnText)
+        self.Bind(stc.EVT_STC_CHANGE, self.OnStcChange)
+        self.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
 
-        self.OnText(-1)
+        self.OnStcChange(-1)
 
-    def OnText(self, evt):
+    def OnKeyDown(self, evt):
+        evt.Skip()
+        if evt.ControlDown() and evt.ShiftDown():
+            if evt.GetKeyCode() == wx.WXK_UP:
+                self.MoveSelectedLinesUp()
+            elif evt.GetKeyCode() == wx.WXK_DOWN:
+                self.MoveSelectedLinesDown()
+
+    def OnStcChange(self, evt):
         lines = self.GetLineCount()
         width = len(str(lines)) * 9 + 5
         self.SetMarginWidth(1, width)
