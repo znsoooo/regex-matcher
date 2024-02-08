@@ -228,7 +228,7 @@ class MyPanel:
                     repls.append((offset, offset + length))
                     offset += length + 1
             else:
-                callback = lambda m: repls.append(m.expand(repl)) or repls[-1]
+                callback = lambda m: repls.append(m.expand(repl).replace('\0', m.group())) or repls[-1]  # replace "\0" as group 0
                 results = re.sub(patt, callback, text, 0, re.M).split('\n')
                 offset = 0
                 for i, ((p1, p2), repl) in enumerate(zip(finds, repls)):
