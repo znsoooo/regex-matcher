@@ -12,6 +12,15 @@ def escape(text):
     return text.translate(table)
 
 
+def copy(text, info):
+    do = wx.TextDataObject()
+    do.SetText(text)
+    if wx.TheClipboard.Open():
+        wx.TheClipboard.SetData(do)
+        wx.TheClipboard.Close()
+        wx.MessageBox(info)
+
+
 class MyTextCtrl(stc.StyledTextCtrl):
     def __init__(self, parent):
         stc.StyledTextCtrl.__init__(self, parent)
@@ -152,6 +161,9 @@ class MyPanel:
         sp.SplitVertically(p1, p2)
 
         # - Bind functions --------------------
+
+        self.st_text.Bind(wx.EVT_LEFT_DCLICK, lambda e: copy(self.tc_text.GetValue(), 'Text copied.'))
+        self.st_res .Bind(wx.EVT_LEFT_DCLICK, lambda e: copy(self.tc_res .GetValue(), 'Results copied.'))
 
         for evt, *widgets in [(stc.EVT_STC_CHANGE, self.tc_text),
                               (wx.EVT_TEXT, self.tc_patt, self.tc_repl),
