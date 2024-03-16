@@ -104,8 +104,8 @@ class MyPanel:
         self.cb_unique = wx.CheckBox(p2, -1, 'Unique')
         self.cb_reverse = wx.CheckBox(p2, -1, 'Reverse')
 
-        self.tc_patt = wx.TextCtrl(p2, size=(20, -1))
-        self.tc_repl = wx.TextCtrl(p2, size=(20, -1))
+        self.tc_patt = wx.TextCtrl(p2, size=(20, -1), style=wx.TE_PROCESS_ENTER)
+        self.tc_repl = wx.TextCtrl(p2, size=(20, -1), style=wx.TE_PROCESS_ENTER)
 
         self.bt_prev  = wx.Button(p2, -1, '<',     size=(24, 24))
         self.bt_next  = wx.Button(p2, -1, '>',     size=(24, 24))
@@ -200,6 +200,8 @@ class MyPanel:
             self.OnView(-1)
         elif code in [wx.WXK_DOWN, wx.WXK_PAGEDOWN]:
             self.OnView(1)
+        elif code == wx.WXK_RETURN:
+            self.tc_text.SetValue(self.tc_res.GetValue())
         elif evt.ControlDown() and code == ord('G') and self.tc_patt.HasFocus() and self.tc_patt.GetStringSelection():
             text = self.tc_patt.GetValue()
             p1, p2 = self.tc_patt.GetSelection()
