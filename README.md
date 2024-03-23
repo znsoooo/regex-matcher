@@ -8,6 +8,7 @@
 
 
 ## 1. About
+
 - __Author:__ Shixian Li
 - __QQ:__ 11313213
 - __Email:__ <lsx7@sina.com>
@@ -26,12 +27,12 @@ pip install wxpython
 python RegexMatcher.py
 ```
 
-Install on Linux, may need to find `*.whl` here and install:
+Install on Linux, you may need to find `*.whl` here and install:
 
 <https://extras.wxpython.org/wxPython4/extras/linux>
 
 
-## 3. App Interface
+## 3. Screenshots
 
 - ASCII Graphic:
 
@@ -53,9 +54,9 @@ Install on Linux, may need to find `*.whl` here and install:
 +---------------------------------+----------------------+-------+
 ```
 
-- Screenshot:
+- PNG Graphic:
 
-![](demo.png)
+![screenshot](demo.png)
 
 
 ## 4. Usage
