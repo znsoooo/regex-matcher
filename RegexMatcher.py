@@ -12,6 +12,14 @@ def escape(text):
     return text.translate(table)
 
 
+def help():
+    dlg = wx.TextEntryDialog(None, 'Help on module re:', 'Syntax Help', re.__doc__.strip(), style=wx.TE_MULTILINE|wx.OK)
+    dlg.SetSize(800, 600)
+    dlg.Center()
+    dlg.ShowModal()
+    dlg.Destroy()
+
+
 def copy(text, info):
     do = wx.TextDataObject()
     do.SetText(text)
@@ -313,8 +321,11 @@ class MyFrame(wx.Frame):
         self.Bind(wx.EVT_CLOSE, self.OnClose)
 
     def OnKeyPress(self, evt):
-        if wx.WXK_ESCAPE == evt.GetKeyCode():
+        key = evt.GetKeyCode()
+        if key == wx.WXK_ESCAPE:
             self.Close()
+        elif key == wx.WXK_F1:
+            help()
         else:
             evt.Skip()
 
