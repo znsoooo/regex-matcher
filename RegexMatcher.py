@@ -1,3 +1,4 @@
+import os
 import re
 import sys
 
@@ -315,6 +316,10 @@ class MyFrame(wx.Frame):
         sp.SetSize(self.GetClientSize())
         sp.SetMinimumPaneSize(20)
         sp.Bind(wx.EVT_SPLITTER_SASH_POS_CHANGING, lambda e: sp.SetSashGravity(sp.GetSashPosition() / sp.GetSize()[0]))
+
+        if os.path.isfile('icon.png'):
+            icon = wx.Icon(__file__ + '/../icon.png')
+            self.SetIcon(icon)
 
         self.OnOpen()
         self.Center()

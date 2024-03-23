@@ -4,10 +4,10 @@ set name=RegexMatcher
 set root=dist\%name%
 set libs=%root%\wx
 
-pyinstaller -ywsF --noupx %name%.py
+pyinstaller -ywsF --noupx %name%.py --icon icon.ico --add-data=icon.png;.
 echo.
 
-pyinstaller -yws --noupx %name%.py
+pyinstaller -yws --noupx %name%.py --icon icon.ico --add-data=icon.png;.
 echo.
 
 del  %root%\%name%.exe.manifest
