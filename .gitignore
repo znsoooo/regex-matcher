@@ -1,8 +1,7 @@
-# cache file
-/__pycache__/*
-/log.txt
-
-# build file
+*.pyc
 /*.spec
 /build/*
 /dist/*
+
+/history.txt
+/test*

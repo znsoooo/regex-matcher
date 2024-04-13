@@ -306,7 +306,7 @@ class MyFrame(wx.Frame):
     def __init__(self):
         wx.Frame.__init__(self, None, size=(1200, 800))
 
-        self.log_file = sys.argv[0] + '/../log.txt'
+        self.history = sys.argv[0] + '/../history.txt'
 
         sp = wx.SplitterWindow(self, -1, style=wx.SP_LIVE_UPDATE)
 
@@ -338,7 +338,7 @@ class MyFrame(wx.Frame):
             evt.Skip()
 
     def OnOpen(self):
-        with open(self.log_file, 'a+', encoding='u8') as f:
+        with open(self.history, 'a+', encoding='u8') as f:
             f.seek(0)
             log = f.read()
         pnl = self.panel
@@ -348,7 +348,7 @@ class MyFrame(wx.Frame):
     def OnClose(self, evt):
         pnl = self.panel
         log = '\n\n'.join(tc.GetValue() for tc in (pnl.tc_patt, pnl.tc_repl, pnl.tc_text))
-        with open(self.log_file, 'w', encoding='u8') as f:
+        with open(self.history, 'w', encoding='u8') as f:
             f.write(log)
         evt.Skip()
 
