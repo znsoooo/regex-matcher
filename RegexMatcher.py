@@ -257,7 +257,7 @@ class MyPanel:
                     repls[i] = (p1 + offset, p2 + offset + diff)
                     offset += diff
             if self.cb_unique.GetValue():
-                results = dict.fromkeys(results)
+                results = list(dict.fromkeys(results))
             if self.cb_sorted.GetValue():
                 results = sorted(results)
             if self.cb_reverse.GetValue():
@@ -306,7 +306,7 @@ class MyFrame(wx.Frame):
     def __init__(self):
         wx.Frame.__init__(self, None, size=(1200, 800))
 
-        self.history = sys.argv[0] + '/../history.txt'
+        self.history = os.path.realpath(sys.argv[0] + '/../history.txt')
 
         sp = wx.SplitterWindow(self, -1, style=wx.SP_LIVE_UPDATE)
 
@@ -317,9 +317,9 @@ class MyFrame(wx.Frame):
         sp.SetMinimumPaneSize(20)
         sp.Bind(wx.EVT_SPLITTER_SASH_POS_CHANGING, lambda e: sp.SetSashGravity(sp.GetSashPosition() / sp.GetSize()[0]))
 
-        if os.path.isfile('icon.png'):
-            icon = wx.Icon(__file__ + '/../icon.png')
-            self.SetIcon(icon)
+        icon_path = os.path.realpath(__file__ + '/../icon.png')
+        if os.path.isfile(icon_path):
+            self.SetIcons(wx.IconBundle(icon_path))
 
         self.OnOpen()
         self.Center()
