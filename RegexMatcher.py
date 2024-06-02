@@ -1,3 +1,49 @@
+r"""
+Regex Matcher
+=============
+
+Input original text on left window, output text shows on the right.
+Input RegEx text, output the matching results.
+Input Replace pattern, output the replacement text.
+The matching or replacement positions are highlighted on the both sides of window.
+Press Up / Down to select the matching positions synchronously.
+
+
+Text for Test
+-------------
+
+[Apple apple pineapple]
+
++---------------+--------------------------+
+| RegEx         | Match Rule               |
++---------------+--------------------------+
+| apple         | Match case               |
+| (?i)apple     | Ignore case              |
+| \bapple\b     | Match word & match case  |
+| (?i)\bapple\b | Match word & ignore case |
++---------------+--------------------------+
+
+* Press F1 for detail help.
+
+
+Licence
+-------
+
+Author:
+    Shixian Li
+
+E-mail:
+    lsx7@sina.com
+
+Website:
+    https://github.com/znsoooo/regex-matcher
+
+Licence:
+    MIT License. Copyright (c) 2023-2024 Shixian Li (znsoooo).
+
+"""
+
+
 import os
 import re
 import sys
@@ -338,16 +384,19 @@ class MyFrame(wx.Frame):
             evt.Skip()
 
     def OnOpen(self):
-        with open(self.history, 'a+', encoding='u8') as f:
-            f.seek(0)
-            log = f.read()
-        pnl = self.panel
-        for tc, text in zip((pnl.tc_patt, pnl.tc_repl, pnl.tc_text), log.split('\n\n', 2) + ['', '']):
-            tc.SetValue(text)
+        try:
+            with open(self.history, 'r', encoding='u8') as f:
+                log = f.read()
+            patt, repl, text = log.split('\n', 2)
+        except Exception:
+            patt, repl, text = r'apple', '', __doc__.lstrip()
+        self.panel.tc_patt.SetValue(patt)
+        self.panel.tc_repl.SetValue(repl)
+        self.panel.tc_text.SetValue(text)
 
     def OnClose(self, evt):
         pnl = self.panel
-        log = '\n\n'.join(tc.GetValue() for tc in (pnl.tc_patt, pnl.tc_repl, pnl.tc_text))
+        log = '\n'.join(tc.GetValue() for tc in (pnl.tc_patt, pnl.tc_repl, pnl.tc_text))
         with open(self.history, 'w', encoding='u8') as f:
             f.write(log)
         evt.Skip()
