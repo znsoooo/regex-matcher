@@ -363,7 +363,7 @@ class MyFrame(wx.Frame):
         sp.SetMinimumPaneSize(20)
         sp.Bind(wx.EVT_SPLITTER_SASH_POS_CHANGING, lambda e: sp.SetSashGravity(sp.GetSashPosition() / sp.GetSize()[0]))
 
-        icon_path = os.path.realpath(__file__ + '/../icon.png')
+        icon_path = os.path.realpath(__file__ + '/../icon.ico')
         if os.path.isfile(icon_path):
             self.SetIcons(wx.IconBundle(icon_path))
 
