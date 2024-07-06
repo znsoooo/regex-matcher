@@ -60,6 +60,14 @@ def escape(text):
     return text.translate(table)
 
 
+def mapping(idx, idxs1, idxs2):
+    last_idx1, last_idx2 = 0, 0
+    for idx1, idx2 in zip(idxs1, idxs2):
+        if idx1 >= idx:
+            return last_idx2 + (idx - last_idx1) * (idx2 - last_idx2) // max(1, idx1 - last_idx1)
+        last_idx1, last_idx2 = idx1, idx2
+
+
 def help():
     dlg = wx.TextEntryDialog(None, 'Help on module re:', 'Syntax Help', re.__doc__.strip(), style=wx.TE_MULTILINE|wx.OK)
     dlg.SetSize(800, 600)
@@ -238,6 +246,9 @@ class MyPanel:
         self.tc_text.Bind(wx.EVT_KEY_DOWN, self.OnText12KeyDown)
         self.tc_res .Bind(wx.EVT_KEY_DOWN, self.OnText12KeyDown)
 
+        self.tc_text.Bind(stc.EVT_STC_UPDATEUI, self.OnSelectionChanged)
+        self.tc_res .Bind(stc.EVT_STC_UPDATEUI, self.OnSelectionChanged)
+
         self.cb_wrap.Bind(wx.EVT_CHECKBOX, self.OnWrap)
         self.bt_apply.Bind(wx.EVT_BUTTON, lambda e: self.tc_text.SetValue(self.tc_res.GetValue()))
 
@@ -345,6 +356,22 @@ class MyPanel:
             if repls:
                 p1, p2 = repls[index]
                 self.tc_res.SetUnicodeSelection(p1, p2)
+
+    def OnSelectionChanged(self, evt):
+        obj = evt.GetEventObject()
+        if not obj.HasFocus():
+            return
+        p11, p12 = obj.GetSelection()
+        finds_idxs = sum(self.finds, ()) + (len(self.tc_text.GetValue()),)
+        repls_idxs = sum(self.repls, ()) + (len(self.tc_res.GetValue()),)
+        if obj is self.tc_text:
+            p21 = mapping(p11, finds_idxs, repls_idxs)
+            p22 = mapping(p12, finds_idxs, repls_idxs)
+            self.tc_res.SetUnicodeSelection(p21, p22)
+        if obj is self.tc_res:
+            p21 = mapping(p11, repls_idxs, finds_idxs)
+            p22 = mapping(p12, repls_idxs, finds_idxs)
+            self.tc_text.SetUnicodeSelection(p21, p22)
 
     def OnWrap(self, evt):
         wrap_mode = stc.STC_WRAP_CHAR if evt.GetSelection() else stc.STC_WRAP_NONE
