@@ -284,6 +284,7 @@ class MyPanel:
         repl = self.tc_repl.GetValue()
         finds = self.finds = []
         repls = self.repls = []
+
         try:
             finds[:] = [m.span() for m in re.finditer(patt, text, re.M)]
             if self.mode == 'regex':
@@ -295,13 +296,21 @@ class MyPanel:
                     repls.append((offset, offset + length))
                     offset += length + 1
             else:
-                callback = lambda m: repls.append(m.expand(repl).replace('\0', m.group())) or repls[-1]  # replace "\0" as group 0
-                results = re.sub(patt, callback, text, 0, re.M).split('\n')
+                # fix `re.sub` bug in PY36: https://bugs.python.org/issue32308
+                strings, idx = [], 0
+                for m in re.finditer(patt, text, re.M):
+                    repls.append(m.expand(repl).replace('\0', m.group()))  # replace "\0" as group 0
+                    strings += [text[idx:m.start()], repls[-1]]
+                    idx = m.end()
+                strings.append(text[idx:])
+
+                results = ''.join(strings).split('\n')
                 offset = 0
                 for i, ((p1, p2), repl) in enumerate(zip(finds, repls)):
                     diff = len(repl) - (p2 - p1)
                     repls[i] = (p1 + offset, p2 + offset + diff)
                     offset += diff
+
             if self.cb_unique.GetValue():
                 results = list(dict.fromkeys(results))
             if self.cb_sorted.GetValue():
@@ -309,8 +318,10 @@ class MyPanel:
             if self.cb_reverse.GetValue():
                 results = reversed(results)
             result = '\n'.join(results)
+
         except re.error as e:
             result = str(e)
+
         self.tc_res.SetValue(result)
 
         self.SetSummary(len(finds))
