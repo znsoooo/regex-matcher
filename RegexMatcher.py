@@ -280,12 +280,12 @@ class MyPanel:
             self.mode = 'replace'
 
         text = self.tc_text.GetValue()
-        patt = self.tc_patt.GetValue() or '(?=A)(?=Z)'  # non-empty pattern or an impossible pattern
+        patt = self.tc_patt.GetValue() or '$0'  # non-empty pattern or an impossible pattern
         repl = self.tc_repl.GetValue()
         finds = self.finds = []
         repls = self.repls = []
         try:
-            finds += [m.span() for m in re.finditer(patt, text, re.M)]
+            finds[:] = [m.span() for m in re.finditer(patt, text, re.M)]
             if self.mode == 'regex':
                 results = []
                 offset = 0
