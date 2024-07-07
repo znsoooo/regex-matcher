@@ -374,7 +374,7 @@ class MyPanel:
             self.tc_text.SetUnicodeSelection(p21, p22)
 
     def OnWrap(self, evt):
-        wrap_mode = stc.STC_WRAP_CHAR if evt.GetSelection() else stc.STC_WRAP_NONE
+        wrap_mode = stc.STC_WRAP_CHAR if self.cb_wrap.GetValue() else stc.STC_WRAP_NONE
         self.tc_text.SetWrapMode(wrap_mode)
         self.tc_res.SetWrapMode(wrap_mode)
 
@@ -422,19 +422,25 @@ class MyFrame(wx.Frame):
             evt.Skip()
 
     def OnOpen(self):
+        pnl = self.panel
         try:
             with open(self.history, 'r', encoding='u8') as f:
                 log = f.read()
-            patt, repl, text = log.split('\n', 2)
+            mask, patt, repl, text = log.split('\n', 3)
+            for i, cb in enumerate([pnl.cb_wrap, pnl.cb_sorted, pnl.cb_unique, pnl.cb_reverse]):
+                cb.SetValue(int(mask[i]))
+            pnl.OnWrap(-1)
+            pnl.mode = ['regex', 'replace'][int(mask[4])]
         except Exception:
             patt, repl, text = r'apple', '', __doc__.lstrip()
-        self.panel.tc_patt.SetValue(patt)
-        self.panel.tc_repl.SetValue(repl)
-        self.panel.tc_text.SetValue(text)
+        pnl.tc_patt.SetValue(patt)
+        pnl.tc_repl.SetValue(repl)
+        pnl.tc_text.SetValue(text)
 
     def OnClose(self, evt):
         pnl = self.panel
-        log = '\n'.join(tc.GetValue() for tc in (pnl.tc_patt, pnl.tc_repl, pnl.tc_text))
+        mask = '%d%d%d%d%d' % (pnl.cb_wrap.Value, pnl.cb_sorted.Value, pnl.cb_unique.Value, pnl.cb_reverse.Value, ['regex', 'replace'].index(pnl.mode))
+        log = '\n'.join([mask, pnl.tc_patt.Value, pnl.tc_repl.Value, pnl.tc_text.Value])
         with open(self.history, 'w', encoding='u8') as f:
             f.write(log)
         evt.Skip()
