@@ -138,6 +138,7 @@ class MyTextCtrl(stc.StyledTextCtrl):
     def SetUnicodeSelection(self, p1, p2):
         text = self.GetValue()
         p1, p2 = (len(text[:p].encode()) for p in (p1, p2))  # unicode index -> bytes index
+        self.ShowPosition(p2)  # show the whole selection by showing p2 first
         self.ShowPosition(p1)
         self.SetSelection(p1, p2)
 
