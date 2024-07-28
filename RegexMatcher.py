@@ -26,7 +26,7 @@ Text for Test
 * Press F1 for detail help.
 
 
-Licence
+License
 -------
 
 Author:
@@ -38,7 +38,7 @@ E-mail:
 Website:
     https://github.com/znsoooo/regex-matcher
 
-Licence:
+License:
     MIT License. Copyright (c) 2023-2024 Shixian Li (znsoooo).
 
 """
@@ -68,14 +68,6 @@ def mapping(idx, idxs1, idxs2):
         last_idx1, last_idx2 = idx1, idx2
 
 
-def help():
-    dlg = wx.TextEntryDialog(None, 'Help on module re:', 'Syntax Help', re.__doc__.strip(), style=wx.TE_MULTILINE|wx.OK)
-    dlg.SetSize(800, 600)
-    dlg.Center()
-    dlg.ShowModal()
-    dlg.Destroy()
-
-
 def copy(text, info):
     do = wx.TextDataObject()
     do.SetText(text)
@@ -83,6 +75,17 @@ def copy(text, info):
         wx.TheClipboard.SetData(do)
         wx.TheClipboard.Close()
         wx.MessageBox(info)
+
+
+class MyTextDialog(wx.TextEntryDialog):
+    def __init__(self, title, prompt, text, size):
+        wx.TextEntryDialog.__init__(self, None, prompt, title, text, style=wx.TE_MULTILINE | wx.OK)
+        font = wx.Font(10, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
+        self.GetChildren()[1].SetFont(font)
+        self.SetSize(size)
+        self.Center()
+        self.ShowModal()
+        self.Destroy()
 
 
 class MyTextCtrl(stc.StyledTextCtrl):
@@ -418,7 +421,11 @@ class MyFrame(wx.Frame):
         if key == wx.WXK_ESCAPE:
             self.Close()
         elif key == wx.WXK_F1:
-            help()
+            text = re.__doc__.strip()
+            MyTextDialog('Regex Syntax', 'Help on module re:', text, (800, 600))
+        elif key == wx.WXK_F12:
+            text = __doc__[__doc__.find('License'):].strip()
+            MyTextDialog('About Regex-Matcher', 'License:', text, (600, 400))
         else:
             evt.Skip()
 
