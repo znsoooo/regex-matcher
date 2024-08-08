@@ -112,6 +112,9 @@ class MyTextCtrl(stc.StyledTextCtrl):
 
         self.OnStcChange(-1)
 
+    def GetUnicodeIndex(self, idx):
+        return len(self.GetTextRaw()[:idx].decode())
+
     def OnKeyDown(self, evt):
         evt.Skip()
         if evt.ControlDown() and evt.ShiftDown():
@@ -348,7 +351,7 @@ class MyPanel:
     def OnView(self, direction):
         finds, repls = self.finds, self.repls
         pos = self.tc_text.GetInsertionPoint()
-        pos = len(self.tc_text.GetValue().encode()[:pos].decode())  # bytes index -> unicode index
+        pos = self.tc_text.GetUnicodeIndex(pos)
         if finds:
             if direction > 0:
                 p1, p2 = min([span for span in finds if span[1] > pos] or [finds[0]])
@@ -366,6 +369,8 @@ class MyPanel:
         if not obj.HasFocus():
             return
         p11, p12 = obj.GetSelection()
+        p11 = obj.GetUnicodeIndex(p11)
+        p12 = obj.GetUnicodeIndex(p12)
         finds_idxs = sum(self.finds, ()) + (len(self.tc_text.GetValue()),)
         repls_idxs = sum(self.repls, ()) + (len(self.tc_res.GetValue()),)
         if obj is self.tc_text:
