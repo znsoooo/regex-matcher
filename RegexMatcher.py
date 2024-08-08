@@ -244,11 +244,11 @@ class MyPanel:
         self.bt_next.Bind(wx.EVT_BUTTON, lambda e: self.OnView( 1))
         self.tc_patt.Bind(wx.EVT_MOUSEWHEEL, lambda e: self.OnView(1 if e.GetWheelRotation() < 0 else -1))
         self.tc_repl.Bind(wx.EVT_MOUSEWHEEL, lambda e: self.OnView(1 if e.GetWheelRotation() < 0 else -1))
-        self.tc_patt.Bind(wx.EVT_KEY_DOWN, self.OnText34KeyDown)
-        self.tc_repl.Bind(wx.EVT_KEY_DOWN, self.OnText34KeyDown)
+        self.tc_patt.Bind(wx.EVT_KEY_DOWN, self.OnInputTextKeyDown)
+        self.tc_repl.Bind(wx.EVT_KEY_DOWN, self.OnInputTextKeyDown)
 
-        self.tc_text.Bind(wx.EVT_KEY_DOWN, self.OnText12KeyDown)
-        self.tc_res .Bind(wx.EVT_KEY_DOWN, self.OnText12KeyDown)
+        self.tc_text.Bind(wx.EVT_KEY_DOWN, self.OnStyledTextKeyDown)
+        self.tc_res .Bind(wx.EVT_KEY_DOWN, self.OnStyledTextKeyDown)
 
         self.tc_text.Bind(stc.EVT_STC_UPDATEUI, self.OnSelectionChanged)
         self.tc_res .Bind(stc.EVT_STC_UPDATEUI, self.OnSelectionChanged)
@@ -256,7 +256,7 @@ class MyPanel:
         self.cb_wrap.Bind(wx.EVT_CHECKBOX, self.OnWrap)
         self.bt_apply.Bind(wx.EVT_BUTTON, lambda e: self.tc_text.SetValue(self.tc_res.GetValue()))
 
-    def OnText12KeyDown(self, evt):
+    def OnStyledTextKeyDown(self, evt):
         if wx.MOD_CONTROL == evt.GetModifiers() and ord('F') == evt.GetKeyCode():
             selected = evt.GetEventObject().GetSelectedText()
             pattern = escape(selected)
@@ -265,7 +265,7 @@ class MyPanel:
             self.tc_patt.SelectAll()
         evt.Skip()
 
-    def OnText34KeyDown(self, evt):
+    def OnInputTextKeyDown(self, evt):
         code = evt.GetKeyCode()
         if code in [wx.WXK_UP, wx.WXK_PAGEUP]:
             self.OnView(-1)
