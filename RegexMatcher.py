@@ -365,6 +365,8 @@ class MyPanel:
                 self.tc_res.SetUnicodeSelection(p1, p2)
 
     def OnSelectionChanged(self, evt):
+        if self.cb_unique.GetValue() or self.cb_sorted.GetValue() or self.cb_reverse.GetValue():
+            return
         obj = evt.GetEventObject()
         if not obj.HasFocus():
             return
