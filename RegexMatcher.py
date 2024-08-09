@@ -47,6 +47,7 @@ License:
 import os
 import re
 import sys
+from itertools import chain
 
 import wx
 import wx.stc as stc
@@ -373,8 +374,8 @@ class MyPanel:
         p11, p12 = obj.GetSelection()
         p11 = obj.GetUnicodeIndex(p11)
         p12 = obj.GetUnicodeIndex(p12)
-        finds_idxs = sum(self.finds, ()) + (len(self.tc_text.GetValue()),)
-        repls_idxs = sum(self.repls, ()) + (len(self.tc_res.GetValue()),)
+        finds_idxs = list(chain.from_iterable(self.finds)) + [len(self.tc_text.GetValue())]  # speed up
+        repls_idxs = list(chain.from_iterable(self.repls)) + [len(self.tc_res.GetValue())]
         if obj is self.tc_text:
             p21 = mapping(p11, finds_idxs, repls_idxs)
             p22 = mapping(p12, finds_idxs, repls_idxs)
