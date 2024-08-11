@@ -52,7 +52,7 @@ from itertools import chain
 import wx
 import wx.stc as stc
 
-__version__ = 'v1.3.0'
+__version__ = 'v1.3.1'
 __title__ = 'RegEx Matcher ' + __version__
 
 
