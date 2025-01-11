@@ -78,6 +78,17 @@ def copy(text, info):
         wx.MessageBox(info)
 
 
+class MyFileDropTarget(wx.FileDropTarget):
+    def __init__(self, window, callback):
+        wx.FileDropTarget.__init__(self)
+        window.SetDropTarget(self)
+        self.callback = callback
+
+    def OnDropFiles(self, x, y, filenames):
+        self.callback(filenames[0])
+        return False
+
+
 class MyTextDialog(wx.TextEntryDialog):
     def __init__(self, title, prompt, text, size):
         wx.TextEntryDialog.__init__(self, None, prompt, title, text, style=wx.TE_MULTILINE | wx.OK)
@@ -111,18 +122,19 @@ class MyTextCtrl(stc.StyledTextCtrl):
         self.Bind(stc.EVT_STC_CHANGE, self.OnStcChange)
         self.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
 
-        self.OnStcChange(-1)
+        self.OnStcChange(None)
 
     def GetUnicodeIndex(self, idx):
         return len(self.GetTextRaw()[:idx].decode())
 
     def OnKeyDown(self, evt):
-        evt.Skip()
-        if evt.ControlDown() and evt.ShiftDown():
-            if evt.GetKeyCode() == wx.WXK_UP:
-                self.MoveSelectedLinesUp()
-            elif evt.GetKeyCode() == wx.WXK_DOWN:
-                self.MoveSelectedLinesDown()
+        hotkey = (evt.GetModifiers(), evt.GetKeyCode())
+        if hotkey == (wx.MOD_CONTROL | wx.MOD_SHIFT, wx.WXK_UP):
+            self.MoveSelectedLinesUp()
+        elif hotkey == (wx.MOD_CONTROL | wx.MOD_SHIFT, wx.WXK_DOWN):
+            self.MoveSelectedLinesDown()
+        else:
+            evt.Skip()
 
     def OnStcChange(self, evt):
         lines = self.GetLineCount()
@@ -234,6 +246,9 @@ class MyPanel:
 
         # - Bind functions --------------------
 
+        for widget in [parent, self.tc_text, self.tc_res]:
+            MyFileDropTarget(widget, self.OnOpenFile)
+
         self.st_text.Bind(wx.EVT_LEFT_DCLICK, lambda e: copy(self.tc_text.GetValue(), 'Text copied.'))
         self.st_res .Bind(wx.EVT_LEFT_DCLICK, lambda e: copy(self.tc_res .GetValue(), 'Results copied.'))
 
@@ -254,6 +269,8 @@ class MyPanel:
         self.tc_text.Bind(wx.EVT_KEY_DOWN, self.OnStyledTextKeyDown)
         self.tc_res .Bind(wx.EVT_KEY_DOWN, self.OnStyledTextKeyDown)
 
+        self.parent.Bind(wx.EVT_CHAR_HOOK, self.OnWindowKeyDown)
+
         self.tc_text.Bind(stc.EVT_STC_UPDATEUI, self.OnSelectionChanged)
         self.tc_res .Bind(stc.EVT_STC_UPDATEUI, self.OnSelectionChanged)
 
@@ -261,7 +278,8 @@ class MyPanel:
         self.bt_apply.Bind(wx.EVT_BUTTON, lambda e: self.tc_text.SetValue(self.tc_res.GetValue()))
 
     def OnStyledTextKeyDown(self, evt):
-        if wx.MOD_CONTROL == evt.GetModifiers() and ord('F') == evt.GetKeyCode():
+        hotkey = (evt.GetModifiers(), evt.GetKeyCode())
+        if hotkey == (wx.MOD_CONTROL, ord('F')):
             selected = evt.GetEventObject().GetSelectedText()
             pattern = escape(selected)
             self.tc_patt.SetValue(pattern)
@@ -270,14 +288,14 @@ class MyPanel:
         evt.Skip()
 
     def OnInputTextKeyDown(self, evt):
-        code = evt.GetKeyCode()
-        if code in [wx.WXK_UP, wx.WXK_PAGEUP]:
+        key = evt.GetKeyCode()
+        if key in [wx.WXK_UP, wx.WXK_PAGEUP]:
             self.OnView(-1)
-        elif code in [wx.WXK_DOWN, wx.WXK_PAGEDOWN]:
+        elif key in [wx.WXK_DOWN, wx.WXK_PAGEDOWN]:
             self.OnView(1)
-        elif code == wx.WXK_RETURN:
+        elif key == wx.WXK_RETURN:
             self.tc_text.SetValue(self.tc_res.GetValue())
-        elif evt.ControlDown() and code == ord('G') and self.tc_patt.HasFocus() and self.tc_patt.GetStringSelection():
+        elif evt.ControlDown() and key == ord('G') and self.tc_patt.HasFocus() and self.tc_patt.GetStringSelection():
             text = self.tc_patt.GetValue()
             p1, p2 = self.tc_patt.GetSelection()
             if not evt.ShiftDown():
@@ -286,6 +304,15 @@ class MyPanel:
             elif text[p1] == '(' and text[p2-1] == ')':
                 self.tc_patt.SetValue(text[:p1] + text[p1+1:p2-1] + text[p2:])
                 self.tc_patt.SetSelection(p1, p2 - 2)
+        else:
+            evt.Skip()
+
+    def OnWindowKeyDown(self, evt):
+        hotkey = (evt.GetModifiers(), evt.GetKeyCode())
+        if hotkey == (wx.MOD_CONTROL, ord('O')):
+            self.OnOpenFile()
+        elif hotkey == (wx.MOD_CONTROL, ord('S')):
+            self.OnSaveFile()
         else:
             evt.Skip()
 
@@ -389,6 +416,30 @@ class MyPanel:
         wrap_mode = stc.STC_WRAP_CHAR if self.cb_wrap.GetValue() else stc.STC_WRAP_NONE
         self.tc_text.SetWrapMode(wrap_mode)
         self.tc_res.SetWrapMode(wrap_mode)
+
+    def OnOpenFile(self, path=None):
+        if not path:
+            dlg = wx.FileDialog(None, 'Open file',
+                wildcard='Text file|*.txt|All file|*.*',
+                style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
+            if dlg.ShowModal() == wx.ID_OK:
+                path = dlg.GetPath()
+        if path:
+            for encoding in ['u8', 'u16', 'gbk', None]:
+                try:
+                    with open(path, encoding=encoding) as f:
+                        return self.tc_text.SetValue(f.read())
+                except UnicodeError:
+                    pass
+
+    def OnSaveFile(self):
+        dlg = wx.FileDialog(None, 'Save file',
+            defaultFile='result',
+            wildcard='Text file|*.txt|All file|*.*',
+            style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
+        if dlg.ShowModal() == wx.ID_OK:
+            with open(dlg.GetPath(), 'w', encoding='u8') as f:
+                f.write(self.tc_res.GetValue())
 
     def SetSummary(self, total=0, current=0):
         patt = self.tc_patt.GetValue()
