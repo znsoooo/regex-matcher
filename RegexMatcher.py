@@ -171,13 +171,12 @@ class MyTextCtrl(stc.StyledTextCtrl):
 class MyPanel:
     def __init__(self, parent, sp):
         self.parent = parent
-
         self.mode = 'regex'
+
+        # - Add widgets --------------------
 
         p1 = wx.Panel(sp)
         p2 = wx.Panel(sp)
-
-        # - Add widgets --------------------
 
         self.tc_text = MyTextCtrl(p1)
         self.tc_res  = MyTextCtrl(p2)
@@ -239,9 +238,6 @@ class MyPanel:
 
         p1.SetSizer(box1)
         p2.SetSizer(box2)
-
-        # - Initial data --------------------
-
         sp.SplitVertically(p1, p2)
 
         # - Bind functions --------------------
@@ -249,13 +245,15 @@ class MyPanel:
         for widget in [parent, self.tc_text, self.tc_res]:
             MyFileDropTarget(widget, self.OnOpenFile)
 
-        self.st_text.Bind(wx.EVT_LEFT_DCLICK, lambda e: copy(self.tc_text.GetValue(), 'Text copied.'))
-        self.st_res .Bind(wx.EVT_LEFT_DCLICK, lambda e: copy(self.tc_res .GetValue(), 'Results copied.'))
+        self.st_text.Bind(wx.EVT_LEFT_DCLICK, lambda e: copy(self.tc_text.GetValue(), 'Text copied'))
+        self.st_res .Bind(wx.EVT_LEFT_DCLICK, lambda e: copy(self.tc_res .GetValue(), 'Results copied'))
 
-        for evt, *widgets in [(stc.EVT_STC_CHANGE, self.tc_text),
-                              (wx.EVT_TEXT, self.tc_patt, self.tc_repl),
-                              (wx.EVT_CHECKBOX, self.cb_sorted, self.cb_unique, self.cb_reverse),
-                              (wx.EVT_SET_FOCUS, self.tc_text, self.tc_patt, self.tc_repl)]:
+        for evt, *widgets in [
+            (stc.EVT_STC_CHANGE, self.tc_text),
+            (wx.EVT_TEXT, self.tc_patt, self.tc_repl),
+            (wx.EVT_CHECKBOX, self.cb_sorted, self.cb_unique, self.cb_reverse),
+            (wx.EVT_SET_FOCUS, self.tc_text, self.tc_patt, self.tc_repl)
+        ]:
             for widget in widgets:
                 widget.Bind(evt, self.OnMatch)
 
@@ -263,12 +261,11 @@ class MyPanel:
         self.bt_next.Bind(wx.EVT_BUTTON, lambda e: self.OnView( 1))
         self.tc_patt.Bind(wx.EVT_MOUSEWHEEL, lambda e: self.OnView(1 if e.GetWheelRotation() < 0 else -1))
         self.tc_repl.Bind(wx.EVT_MOUSEWHEEL, lambda e: self.OnView(1 if e.GetWheelRotation() < 0 else -1))
+
         self.tc_patt.Bind(wx.EVT_KEY_DOWN, self.OnInputTextKeyDown)
         self.tc_repl.Bind(wx.EVT_KEY_DOWN, self.OnInputTextKeyDown)
-
         self.tc_text.Bind(wx.EVT_KEY_DOWN, self.OnStyledTextKeyDown)
         self.tc_res .Bind(wx.EVT_KEY_DOWN, self.OnStyledTextKeyDown)
-
         self.parent.Bind(wx.EVT_CHAR_HOOK, self.OnWindowKeyDown)
 
         self.tc_text.Bind(stc.EVT_STC_UPDATEUI, self.OnSelectionChanged)
@@ -480,10 +477,10 @@ class MyFrame(wx.Frame):
         if key == wx.WXK_ESCAPE:
             self.Close()
         elif key == wx.WXK_F1:
-            text = re.__doc__.strip()
+            text = re.__doc__.strip() + '\n'
             MyTextDialog('Regex Syntax', 'Help on module re:', text, (800, 600))
         elif key == wx.WXK_F12:
-            text = __doc__[__doc__.find('License'):].strip()
+            text = __doc__[__doc__.find('License'):].strip() + '\n'
             MyTextDialog('About Regex-Matcher', 'License:', text, (600, 400))
         else:
             evt.Skip()
