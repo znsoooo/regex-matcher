@@ -453,7 +453,7 @@ class MyFrame(wx.Frame):
     def __init__(self):
         wx.Frame.__init__(self, None, size=(1200, 800))
 
-        self.history = os.path.realpath(sys.argv[0] + '/../history.txt')
+        self.history = os.path.splitext(sys.argv[0])[0] + '.log'
 
         sp = wx.SplitterWindow(self, -1, style=wx.SP_LIVE_UPDATE)
 
