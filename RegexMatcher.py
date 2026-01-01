@@ -56,12 +56,12 @@ __version__ = 'v1.3.2'
 __title__ = 'RegEx Matcher ' + __version__
 
 
-def escape(text):
+def Escape(text):
     table = {i: '\\' + c for i, c in zip(b'()[{?*+|^$\\.\t\n\r\v\f', '()[{?*+|^$\\.tnrvf')}
     return text.translate(table)
 
 
-def mapping(idx, idxs1, idxs2):
+def MapIndex(idx, idxs1, idxs2):
     last_idx1, last_idx2 = 0, 0
     for idx1, idx2 in zip(idxs1, idxs2):
         if idx1 >= idx:
@@ -69,7 +69,7 @@ def mapping(idx, idxs1, idxs2):
         last_idx1, last_idx2 = idx1, idx2
 
 
-def copy(text, info):
+def Copy(text, info):
     do = wx.TextDataObject()
     do.SetText(text)
     if wx.TheClipboard.Open():
@@ -245,8 +245,8 @@ class MyPanel:
         for widget in [parent, self.tc_text, self.tc_res]:
             MyFileDropTarget(widget, self.OnOpenFile)
 
-        self.st_text.Bind(wx.EVT_LEFT_DCLICK, lambda e: copy(self.tc_text.GetValue(), 'Text copied'))
-        self.st_res .Bind(wx.EVT_LEFT_DCLICK, lambda e: copy(self.tc_res .GetValue(), 'Results copied'))
+        self.st_text.Bind(wx.EVT_LEFT_DCLICK, lambda e: Copy(self.tc_text.GetValue(), 'Text copied'))
+        self.st_res .Bind(wx.EVT_LEFT_DCLICK, lambda e: Copy(self.tc_res .GetValue(), 'Results copied'))
 
         for evt, *widgets in [
             (stc.EVT_STC_CHANGE, self.tc_text),
@@ -278,7 +278,7 @@ class MyPanel:
         hotkey = (evt.GetModifiers(), evt.GetKeyCode())
         if hotkey == (wx.MOD_CONTROL, ord('F')):
             selected = evt.GetEventObject().GetSelectedText()
-            pattern = escape(selected)
+            pattern = Escape(selected)
             self.tc_patt.SetValue(pattern)
             self.tc_patt.SetFocus()
             self.tc_patt.SelectAll()
@@ -401,12 +401,12 @@ class MyPanel:
         finds_idxs = list(chain.from_iterable(self.finds)) + [len(self.tc_text.GetValue())]  # speed up
         repls_idxs = list(chain.from_iterable(self.repls)) + [len(self.tc_res.GetValue())]
         if obj is self.tc_text:
-            p21 = mapping(p11, finds_idxs, repls_idxs)
-            p22 = mapping(p12, finds_idxs, repls_idxs)
+            p21 = MapIndex(p11, finds_idxs, repls_idxs)
+            p22 = MapIndex(p12, finds_idxs, repls_idxs)
             self.tc_res.SetUnicodeSelection(p21, p22)
         if obj is self.tc_res:
-            p21 = mapping(p11, repls_idxs, finds_idxs)
-            p22 = mapping(p12, repls_idxs, finds_idxs)
+            p21 = MapIndex(p11, repls_idxs, finds_idxs)
+            p22 = MapIndex(p12, repls_idxs, finds_idxs)
             self.tc_text.SetUnicodeSelection(p21, p22)
 
     def OnWrap(self, evt):
