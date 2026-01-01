@@ -350,7 +350,10 @@ class MyPanel:
         if hotkey == (wx.MOD_CONTROL, ord('O')):
             self.OnOpenFile()
         elif hotkey == (wx.MOD_CONTROL, ord('S')):
-            self.OnSaveFile()
+            if evt.GetEventObject() is self.tc_text:
+                self.OnSaveFile(self.tc_text, 'text.txt')
+            else:
+                self.OnSaveFile(self.tc_res, 'result.txt')
         else:
             evt.Skip()
 
@@ -441,14 +444,14 @@ class MyPanel:
                 except UnicodeError:
                     pass
 
-    def OnSaveFile(self):
+    def OnSaveFile(self, tc, path):
         dlg = wx.FileDialog(None, 'Save file',
-            defaultFile='result',
+            defaultFile=path,
             wildcard='Text file|*.txt|All file|*.*',
             style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
         if dlg.ShowModal() == wx.ID_OK:
             with open(dlg.GetPath(), 'w', encoding='u8') as f:
-                f.write(self.tc_res.GetValue())
+                f.write(tc.GetValue())
 
     def SetSummary(self, total=0, current=0):
         patt = self.tc_patt.GetValue()
