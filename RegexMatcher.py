@@ -47,7 +47,6 @@ License:
 import os
 import re
 import sys
-from itertools import chain
 
 import wx
 import wx.stc as stc
@@ -62,11 +61,51 @@ def Escape(text):
 
 
 def MapIndex(idx, idxs1, idxs2):
+    def flatten(mat):
+        for arr in mat:
+            yield from arr
+
     last_idx1, last_idx2 = 0, 0
-    for idx1, idx2 in zip(idxs1, idxs2):
+    for idx1, idx2 in zip(flatten(idxs1), flatten(idxs2)):
         if idx1 >= idx:
             return last_idx2 + (idx - last_idx1) * (idx2 - last_idx2) // max(1, idx1 - last_idx1)
         last_idx1, last_idx2 = idx1, idx2
+
+
+def GetMatches(text, patt, repl, mode):
+    finds = []
+    repls = []
+
+    try:
+        finds[:] = [m.span() for m in re.finditer(patt, text, re.M)]
+        if mode == 'regex':
+            results = []
+            offset = 0
+            for m in re.findall(patt, text, re.M):
+                results.append(m if isinstance(m, str) else '\t'.join(m))  # join sub-strings by '\t'
+                length = len(results[-1])
+                repls.append((offset, offset + length))
+                offset += length + 1
+        else:
+            # fix 're.sub' bug in PY36: https://bugs.python.org/issue32308
+            strings, idx = [], 0
+            for m in re.finditer(patt, text, re.M):
+                repls.append(m.expand(repl).replace('\0', m.group()))  # replace '\0' as group 0
+                strings += [text[idx:m.start()], repls[-1]]
+                idx = m.end()
+            strings.append(text[idx:])
+
+            results = ''.join(strings).split('\n')
+            offset = 0
+            for i, ((p1, p2), repl) in enumerate(zip(finds, repls)):
+                diff = len(repl) - (p2 - p1)
+                repls[i] = (p1 + offset, p2 + offset + diff)
+                offset += diff
+
+    except re.error as e:
+        results = str(e).split('\n')
+
+    return results, finds, repls
 
 
 def Copy(text, info):
@@ -172,6 +211,8 @@ class MyPanel:
     def __init__(self, parent, sp):
         self.parent = parent
         self.mode = 'regex'
+        self.finds = []
+        self.repls = []
 
         # - Add widgets --------------------
 
@@ -325,53 +366,24 @@ class MyPanel:
         text = self.tc_text.GetValue()
         patt = self.tc_patt.GetValue() or '$0'  # non-empty pattern or an impossible pattern
         repl = self.tc_repl.GetValue()
-        finds = self.finds = []
-        repls = self.repls = []
 
-        try:
-            finds[:] = [m.span() for m in re.finditer(patt, text, re.M)]
-            if self.mode == 'regex':
-                results = []
-                offset = 0
-                for m in re.findall(patt, text, re.M):
-                    results.append(m if isinstance(m, str) else '\t'.join(m))  # join sub-strings by '\t'
-                    length = len(results[-1])
-                    repls.append((offset, offset + length))
-                    offset += length + 1
-            else:
-                # fix `re.sub` bug in PY36: https://bugs.python.org/issue32308
-                strings, idx = [], 0
-                for m in re.finditer(patt, text, re.M):
-                    repls.append(m.expand(repl).replace('\0', m.group()))  # replace "\0" as group 0
-                    strings += [text[idx:m.start()], repls[-1]]
-                    idx = m.end()
-                strings.append(text[idx:])
+        results, self.finds, self.repls = GetMatches(text, patt, repl, self.mode)
 
-                results = ''.join(strings).split('\n')
-                offset = 0
-                for i, ((p1, p2), repl) in enumerate(zip(finds, repls)):
-                    diff = len(repl) - (p2 - p1)
-                    repls[i] = (p1 + offset, p2 + offset + diff)
-                    offset += diff
-
-            if self.cb_unique.GetValue():
-                results = list(dict.fromkeys(results))
-            if self.cb_sorted.GetValue():
-                results = sorted(results)
-            if self.cb_reverse.GetValue():
-                results = reversed(results)
-            result = '\n'.join(results)
-
-        except re.error as e:
-            result = str(e)
+        if self.cb_unique.GetValue():
+            results = list(dict.fromkeys(results))
+        if self.cb_sorted.GetValue():
+            results = sorted(results)
+        if self.cb_reverse.GetValue():
+            results = reversed(results)
+        result = '\n'.join(results)
 
         self.tc_res.SetValue(result)
 
-        self.SetSummary(len(finds))
-        self.tc_text.SetUnicodeHighlights(finds)
+        self.SetSummary(len(self.finds))
+        self.tc_text.SetUnicodeHighlights(self.finds)
         if self.cb_unique.GetValue() or self.cb_sorted.GetValue() or self.cb_reverse.GetValue():
-            repls.clear()
-        self.tc_res.SetUnicodeHighlights(repls)
+            self.repls.clear()
+        self.tc_res.SetUnicodeHighlights(self.repls)
 
     def OnView(self, direction):
         finds, repls = self.finds, self.repls
@@ -398,8 +410,8 @@ class MyPanel:
         p11, p12 = obj.GetSelection()
         p11 = obj.GetUnicodeIndex(p11)
         p12 = obj.GetUnicodeIndex(p12)
-        finds_idxs = list(chain.from_iterable(self.finds)) + [len(self.tc_text.GetValue())]  # speed up
-        repls_idxs = list(chain.from_iterable(self.repls)) + [len(self.tc_res.GetValue())]
+        finds_idxs = self.finds + [[len(self.tc_text.GetValue())]]
+        repls_idxs = self.repls + [[len(self.tc_res.GetValue())]]
         if obj is self.tc_text:
             p21 = MapIndex(p11, finds_idxs, repls_idxs)
             p22 = MapIndex(p12, finds_idxs, repls_idxs)
