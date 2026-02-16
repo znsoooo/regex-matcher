@@ -47,6 +47,8 @@ License:
 import os
 import re
 import sys
+import bisect
+from functools import lru_cache
 
 import wx
 import wx.stc as stc
@@ -61,17 +63,17 @@ def Escape(text):
 
 
 def MapIndex(idx, idxs1, idxs2):
-    def flatten(mat):
-        for arr in mat:
-            yield from arr
-
+    pos = bisect.bisect_left(idxs1, (idx, idx))
     last_idx1, last_idx2 = 0, 0
-    for idx1, idx2 in zip(flatten(idxs1), flatten(idxs2)):
-        if idx1 >= idx:
-            return last_idx2 + (idx - last_idx1) * (idx2 - last_idx2) // max(1, idx1 - last_idx1)
-        last_idx1, last_idx2 = idx1, idx2
+    for i in range(max(0, pos - 1), pos + 1):
+        for idx1, idx2 in zip(idxs1[i], idxs2[i]):
+            if idx1 >= idx:
+                return last_idx2 + (idx - last_idx1) * (idx2 - last_idx2) // max(1, idx1 - last_idx1)
+            last_idx1, last_idx2 = idx1, idx2
+    raise IndexError(idx)
 
 
+@lru_cache(2)
 def GetMatches(text, patt, repl, mode):
     finds = []
     repls = []
@@ -106,6 +108,52 @@ def GetMatches(text, patt, repl, mode):
         results = str(e).split('\n')
 
     return results, finds, repls
+
+
+class TextIndexCache:
+    def __init__(self, data=b''):
+        self.SetData(data)
+
+    def SetData(self, data):
+        self.data = data
+        self.text = data.decode()
+        self.bytes_idxs = [0]
+        self.unicode_idxs = [0]
+
+    def MapIndex(self, idx, idxs, other_idxs, other_sublen):  # equal to: return other_sublen(0, idx)
+        pos = bisect.bisect_left(idxs, idx)
+        if pos < len(idxs) and idx == idxs[pos]:
+            # if 'idx' exist, return 'other_idx' directly
+            return other_idxs[pos]
+        if pos == len(idxs) or idx - idxs[pos - 1] < idxs[pos] - idx:
+            # if 'idx' at last, or nearer the front index, calculate 'other_idx' position from front index
+            other_idx = other_idxs[pos - 1] + other_sublen(idxs[pos - 1], idx)
+        else:
+            # otherwise, calculate 'other_idx' position from back index
+            other_idx = other_idxs[pos] - other_sublen(idx, idxs[pos])
+        idxs.insert(pos, idx)
+        other_idxs.insert(pos, other_idx)
+        return other_idx
+
+    def BytesSublen(self, start, end):
+        return len(self.text[start:end].encode())
+
+    def UnicodeSublen(self, start, end):
+        return len(self.data[start:end].decode())
+
+    def GetBytesIndex(self, idx):  # equal to: return self.BytesLength(0, idx)
+        return self.MapIndex(idx, self.unicode_idxs, self.bytes_idxs, self.BytesSublen)
+
+    def GetUnicodeIndex(self, idx):  # equal to: return self.UnicodeLength(0, idx)
+        return self.MapIndex(idx, self.bytes_idxs, self.unicode_idxs, self.UnicodeSublen)
+
+    def GetBytesIndexes(self, *idxs):
+        for idx in idxs:
+            yield self.GetBytesIndex(idx)
+
+    def GetUnicodeIndexes(self, *idxs):
+        for idx in idxs:
+            yield self.GetUnicodeIndex(idx)
 
 
 def Copy(text, info):
@@ -143,6 +191,12 @@ class MyTextCtrl(stc.StyledTextCtrl):
     def __init__(self, parent):
         stc.StyledTextCtrl.__init__(self, parent)
 
+        self.cache = TextIndexCache()
+        self.GetBytesIndex = self.cache.GetBytesIndex
+        self.GetBytesIndexes = self.cache.GetBytesIndexes
+        self.GetUnicodeIndex = self.cache.GetUnicodeIndex
+        self.GetUnicodeIndexes = self.cache.GetUnicodeIndexes
+
         self.StyleSetSpec(stc.STC_STYLE_DEFAULT, 'face:Courier New,size:11')
         self.StyleSetSpec(1, 'back:#FFFF00')
         self.StyleSetSpec(2, 'back:#00FFFF')
@@ -163,8 +217,8 @@ class MyTextCtrl(stc.StyledTextCtrl):
 
         self.OnStcChange(None)
 
-    def GetUnicodeIndex(self, idx):
-        return len(self.GetTextRaw()[:idx].decode())
+    def GetValue(self):
+        return self.cache.text
 
     def OnKeyDown(self, evt):
         hotkey = (evt.GetModifiers(), evt.GetKeyCode())
@@ -176,6 +230,7 @@ class MyTextCtrl(stc.StyledTextCtrl):
             evt.Skip()
 
     def OnStcChange(self, evt):
+        self.cache.SetData(self.GetTextRaw())  # update cache
         lines = self.GetLineCount()
         width = len(str(lines)) * 9 + 5
         self.SetMarginWidth(1, width)
@@ -185,17 +240,13 @@ class MyTextCtrl(stc.StyledTextCtrl):
         self.StartStyling(0)
         self.SetStyling(len(text.encode()), 0)
         if spans and len(spans) < 10000:
-            idxs = [0]
-            for c in text:
-                idxs.append(idxs[-1] + len(c.encode()))  # unicode index -> bytes index
             for i, (p1, p2) in enumerate(spans):
-                p1, p2 = idxs[p1], idxs[p2]
+                p1, p2 = self.GetBytesIndexes(p1, p2)
                 self.StartStyling(p1)
                 self.SetStyling(p2 - p1, (i % 2) + 1)
 
     def SetUnicodeSelection(self, p1, p2):
-        text = self.GetValue()
-        p1, p2 = (len(text[:p].encode()) for p in (p1, p2))  # unicode index -> bytes index
+        p1, p2 = self.GetBytesIndexes(p1, p2)
         self.ShowPosition(p2)  # show the whole selection by showing p2 first
         self.ShowPosition(p1)
         self.SetSelection(p1, p2)
@@ -393,15 +444,14 @@ class MyPanel:
         pos = self.tc_text.GetInsertionPoint()
         pos = self.tc_text.GetUnicodeIndex(pos)
         if finds:
-            if direction > 0:
-                p1, p2 = min([span for span in finds if span[1] > pos] or [finds[0]])
-            else:
-                p1, p2 = max([span for span in finds if span[1] < pos] or [finds[-1]])
+            idx = bisect.bisect_right(finds, (pos, pos))
+            offset = 0 if direction > 0 else -2
+            idx = (idx + offset) % len(finds)
+            p1, p2 = finds[idx]
             self.tc_text.SetUnicodeSelection(p1, p2)
-            index = finds.index((p1, p2))
-            self.SetSummary(len(finds), index + 1)
+            self.SetSummary(len(finds), idx + 1)
             if repls:
-                p1, p2 = repls[index]
+                p1, p2 = repls[idx]
                 self.tc_res.SetUnicodeSelection(p1, p2)
 
     def OnSelectionChanged(self, evt):
@@ -411,10 +461,9 @@ class MyPanel:
         if not obj.HasFocus():
             return
         p11, p12 = obj.GetSelection()
-        p11 = obj.GetUnicodeIndex(p11)
-        p12 = obj.GetUnicodeIndex(p12)
-        finds_idxs = self.finds + [[len(self.tc_text.GetValue())]]
-        repls_idxs = self.repls + [[len(self.tc_res.GetValue())]]
+        p11, p12 = obj.GetUnicodeIndexes(p11, p12)
+        finds_idxs = self.finds + [(len(self.tc_text.GetValue()),)]
+        repls_idxs = self.repls + [(len(self.tc_res.GetValue()),)]
         if obj is self.tc_text:
             p21 = MapIndex(p11, finds_idxs, repls_idxs)
             p22 = MapIndex(p12, finds_idxs, repls_idxs)
