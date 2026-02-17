@@ -220,6 +220,11 @@ class MyTextCtrl(stc.StyledTextCtrl):
     def GetValue(self):
         return self.cache.text
 
+    def UpdateCache(self, evt=None):
+        if evt:
+            evt.Skip()
+        self.cache.SetData(self.GetTextRaw())
+
     def OnKeyDown(self, evt):
         hotkey = (evt.GetModifiers(), evt.GetKeyCode())
         if hotkey == (wx.MOD_CONTROL | wx.MOD_SHIFT, wx.WXK_UP):
@@ -230,7 +235,7 @@ class MyTextCtrl(stc.StyledTextCtrl):
             evt.Skip()
 
     def OnStcChange(self, evt):
-        self.cache.SetData(self.GetTextRaw())  # update cache
+        self.UpdateCache()
         lines = self.GetLineCount()
         width = len(str(lines)) * 9 + 5
         self.SetMarginWidth(1, width)
@@ -348,6 +353,9 @@ class MyPanel:
         ]:
             for widget in widgets:
                 widget.Bind(evt, self.OnMatch)
+
+        # The last binding calls first, so binding 'UpdateCache' to 'EVT_STC_CHANGE' should be after binding 'OnMatch' to 'EVT_STC_CHANGE'.
+        self.tc_text.Bind(stc.EVT_STC_CHANGE, self.tc_text.UpdateCache)
 
         self.bt_prev.Bind(wx.EVT_BUTTON, lambda e: self.OnView(-1))
         self.bt_next.Bind(wx.EVT_BUTTON, lambda e: self.OnView( 1))
