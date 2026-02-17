@@ -368,8 +368,8 @@ class MyPanel:
         self.tc_res .Bind(wx.EVT_KEY_DOWN, self.OnStyledTextKeyDown)
         self.parent.Bind(wx.EVT_CHAR_HOOK, self.OnWindowKeyDown)
 
-        self.tc_text.Bind(stc.EVT_STC_UPDATEUI, self.OnSelectionChanged)
-        self.tc_res .Bind(stc.EVT_STC_UPDATEUI, self.OnSelectionChanged)
+        self.tc_text.Bind(stc.EVT_STC_UPDATEUI, lambda e: self.MappingSelection(self.tc_text, not self.tc_text.HasFocus()))
+        self.tc_res .Bind(stc.EVT_STC_UPDATEUI, lambda e: self.MappingSelection(self.tc_res, not self.tc_res.HasFocus()))
 
         self.cb_wrap.Bind(wx.EVT_CHECKBOX, self.OnWrap)
         self.bt_apply.Bind(wx.EVT_BUTTON, lambda e: self.tc_text.SetValue(self.tc_res.GetValue()))
@@ -442,10 +442,13 @@ class MyPanel:
         self.tc_res.SetValue(result)
 
         self.SetSummary(len(self.finds))
+
         self.tc_text.SetUnicodeHighlights(self.finds)
         if self.cb_unique.GetValue() or self.cb_sorted.GetValue() or self.cb_reverse.GetValue():
             self.repls.clear()
         self.tc_res.SetUnicodeHighlights(self.repls)
+
+        self.MappingSelection(self.tc_text)
 
     def OnView(self, direction):
         finds, repls = self.finds, self.repls
@@ -462,21 +465,18 @@ class MyPanel:
                 p1, p2 = repls[idx]
                 self.tc_res.SetUnicodeSelection(p1, p2)
 
-    def OnSelectionChanged(self, evt):
-        if self.cb_unique.GetValue() or self.cb_sorted.GetValue() or self.cb_reverse.GetValue():
+    def MappingSelection(self, tc, skip=False):
+        if not self.repls or skip:
             return
-        obj = evt.GetEventObject()
-        if not obj.HasFocus():
-            return
-        p11, p12 = obj.GetSelection()
-        p11, p12 = obj.GetUnicodeIndexes(p11, p12)
+        p11, p12 = tc.GetSelection()
+        p11, p12 = tc.GetUnicodeIndexes(p11, p12)
         finds_idxs = self.finds + [(len(self.tc_text.GetValue()),)]
         repls_idxs = self.repls + [(len(self.tc_res.GetValue()),)]
-        if obj is self.tc_text:
+        if tc is self.tc_text:
             p21 = MapIndex(p11, finds_idxs, repls_idxs)
             p22 = MapIndex(p12, finds_idxs, repls_idxs)
             self.tc_res.SetUnicodeSelection(p21, p22)
-        if obj is self.tc_res:
+        if tc is self.tc_res:
             p21 = MapIndex(p11, repls_idxs, finds_idxs)
             p22 = MapIndex(p12, repls_idxs, finds_idxs)
             self.tc_text.SetUnicodeSelection(p21, p22)
