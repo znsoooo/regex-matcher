@@ -445,7 +445,7 @@ class MyPanel:
 
         self.tc_text.SetUnicodeHighlights(self.finds)
         if self.cb_unique.GetValue() or self.cb_sorted.GetValue() or self.cb_reverse.GetValue():
-            self.repls.clear()
+            self.repls = []  # because of using 'lru_cache', here should not be '.clear()'
         self.tc_res.SetUnicodeHighlights(self.repls)
 
         self.MappingSelection(self.tc_text)
