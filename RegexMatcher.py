@@ -64,6 +64,8 @@ def Escape(text):
 
 def MapIndex(idx, idxs1, idxs2):
     pos = bisect.bisect_left(idxs1, (idx, idx))
+    if pos == len(idxs1):
+        return idxs2[-1][-1] + (idx - idxs1[-1][-1])
     last_idx1, last_idx2 = 0, 0
     for i in range(max(0, pos - 1), pos + 1):
         for idx1, idx2 in zip(idxs1[i], idxs2[i]):
@@ -470,15 +472,13 @@ class MyPanel:
             return
         p11, p12 = tc.GetSelection()
         p11, p12 = tc.GetUnicodeIndexes(p11, p12)
-        finds_idxs = self.finds + [(len(self.tc_text.GetValue()),)]
-        repls_idxs = self.repls + [(len(self.tc_res.GetValue()),)]
         if tc is self.tc_text:
-            p21 = MapIndex(p11, finds_idxs, repls_idxs)
-            p22 = MapIndex(p12, finds_idxs, repls_idxs)
+            p21 = MapIndex(p11, self.finds, self.repls)
+            p22 = MapIndex(p12, self.finds, self.repls)
             self.tc_res.SetUnicodeSelection(p21, p22)
         if tc is self.tc_res:
-            p21 = MapIndex(p11, repls_idxs, finds_idxs)
-            p22 = MapIndex(p12, repls_idxs, finds_idxs)
+            p21 = MapIndex(p11, self.repls, self.finds)
+            p22 = MapIndex(p12, self.repls, self.finds)
             self.tc_text.SetUnicodeSelection(p21, p22)
 
     def OnWrap(self, evt):
