@@ -39,7 +39,7 @@ Website:
     https://github.com/znsoooo/regex-matcher
 
 License:
-    MIT License. Copyright (c) 2023-2025 Shixian Li (znsoooo).
+    MIT License. Copyright (c) 2023-2026 Shixian Li (znsoooo).
 
 """
 
@@ -53,7 +53,7 @@ from functools import lru_cache
 import wx
 import wx.stc as stc
 
-__version__ = 'v1.3.2'
+__version__ = 'v1.3.3'
 __title__ = 'RegEx Matcher ' + __version__
 
 

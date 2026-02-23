@@ -13,7 +13,7 @@
 - __QQ:__ 11313213
 - __Email:__ <lsx7@sina.com>
 - __GitHub:__ <https://github.com/znsoooo/regex-matcher>
-- __License:__ MIT License. Copyright (c) 2023-2025 Shixian Li (znsoooo). All Rights Reserved.
+- __License:__ MIT License. Copyright (c) 2023-2026 Shixian Li (znsoooo). All Rights Reserved.
 
 
 ## 2. Installation
@@ -38,7 +38,7 @@ Install on Linux, you may need to find `*.whl` here and install:
 
 ```
 +----------------------------------------------------------------+
-| Regex Matcher v1.1.0                               [_] [ ] [X] |
+| Regex Matcher v1.3.3                               [_] [ ] [X] |
 +---------------------------------+------------------------------+
 | Text:                           | Results:                     |
 |                                 |                              |
