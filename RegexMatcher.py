@@ -214,18 +214,23 @@ class MyTextCtrl(stc.StyledTextCtrl):
         self.SetViewWhiteSpace(True)
         self.SetWrapMode(stc.STC_WRAP_CHAR)
 
-        self.Bind(stc.EVT_STC_CHANGE, self.OnStcChange)
+        self.Bind(stc.EVT_STC_CHANGE, self.UpdateCache)
+        self.Bind(stc.EVT_STC_PAINTED, self.UpdateMargin)
         self.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
-
-        self.OnStcChange(None)
 
     def GetValue(self):
         return self.cache.text
 
-    def UpdateCache(self, evt=None):
-        if evt:
-            evt.Skip()
+    def UpdateCache(self, evt):
+        evt.Skip()
         self.cache.SetData(self.GetTextRaw())
+
+    def UpdateMargin(self, evt):
+        rect = self.GetRect()
+        pos = self.PositionFromPoint(rect[2:])
+        line = self.LineFromPosition(pos) + 1
+        width = len(str(line)) * 9 + 5
+        self.SetMarginWidth(1, width)
 
     def OnKeyDown(self, evt):
         hotkey = (evt.GetModifiers(), evt.GetKeyCode())
@@ -235,12 +240,6 @@ class MyTextCtrl(stc.StyledTextCtrl):
             self.MoveSelectedLinesDown()
         else:
             evt.Skip()
-
-    def OnStcChange(self, evt):
-        self.UpdateCache()
-        lines = self.GetLineCount()
-        width = len(str(lines)) * 9 + 5
-        self.SetMarginWidth(1, width)
 
     def SetUnicodeHighlights(self, spans):
         text = self.GetValue()
