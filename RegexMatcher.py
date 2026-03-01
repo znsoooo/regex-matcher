@@ -189,6 +189,30 @@ class MyTextDialog(wx.TextEntryDialog):
         self.Destroy()
 
 
+class MyComboBox(wx.ComboBox):
+    def __init__(self, parent):
+        wx.ComboBox.__init__(self, parent, choices=[''], style=wx.TE_PROCESS_ENTER)
+
+        for evt in [wx.EVT_COMBOBOX, wx.EVT_COMBOBOX_DROPDOWN, wx.EVT_TEXT_ENTER, wx.EVT_SET_FOCUS, wx.EVT_KILL_FOCUS]:
+            self.Bind(evt, self.AddHistory)
+
+    def RemoveItem(self, item):
+        try:
+            self.Delete(self.GetItems().index(item))
+        except ValueError:
+            pass
+
+    def AddHistory(self, evt=None):
+        if evt:
+            evt.Skip()
+        text = self.GetValue()
+        if text.strip():
+            self.RemoveItem('')
+            self.RemoveItem(text)
+            self.Insert(text, 0)
+            self.SetSelection(0)
+
+
 class MyTextCtrl(stc.StyledTextCtrl):
     def __init__(self, parent):
         stc.StyledTextCtrl.__init__(self, parent)
@@ -285,8 +309,8 @@ class MyPanel:
         self.cb_unique = wx.CheckBox(p2, -1, 'Unique')
         self.cb_reverse = wx.CheckBox(p2, -1, 'Reverse')
 
-        self.tc_patt = wx.TextCtrl(p2, size=(20, -1), style=wx.TE_PROCESS_ENTER)
-        self.tc_repl = wx.TextCtrl(p2, size=(20, -1), style=wx.TE_PROCESS_ENTER)
+        self.tc_patt = MyComboBox(p2)
+        self.tc_repl = MyComboBox(p2)
 
         self.bt_prev  = wx.Button(p2, -1, '<',     size=(24, 24))
         self.bt_next  = wx.Button(p2, -1, '>',     size=(24, 24))
@@ -393,9 +417,11 @@ class MyPanel:
             self.OnView(1)
         elif key == wx.WXK_RETURN:
             self.tc_text.SetValue(self.tc_res.GetValue())
-        elif evt.ControlDown() and key == ord('G') and self.tc_patt.HasFocus() and self.tc_patt.GetStringSelection():
+        elif evt.ControlDown() and key == ord('G') and self.tc_patt.HasFocus():
             text = self.tc_patt.GetValue()
-            p1, p2 = self.tc_patt.GetSelection()
+            p1, p2 = self.tc_patt.GetTextSelection()
+            if p1 == p2:
+                return
             if not evt.ShiftDown():
                 self.tc_patt.SetValue(text[:p1] + '(' + text[p1:p2] + ')' + text[p2:])
                 self.tc_patt.SetSelection(p1, p2 + 2)
