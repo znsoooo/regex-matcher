@@ -119,8 +119,10 @@ class TextIndexCache:
     def SetData(self, data):
         self.data = data
         self.text = data.decode()
-        self.bytes_idxs = [0]
-        self.unicode_idxs = [0]
+        self.bytes_length = len(self.data)
+        self.unicode_length = len(self.text)
+        self.bytes_idxs = [0, self.bytes_length]
+        self.unicode_idxs = [0, self.unicode_length]
 
     def MapIndex(self, idx, idxs, other_idxs, other_sublen):  # equal to: return other_sublen(0, idx)
         pos = bisect.bisect_left(idxs, idx)
@@ -266,9 +268,8 @@ class MyTextCtrl(stc.StyledTextCtrl):
             evt.Skip()
 
     def SetUnicodeHighlights(self, spans):
-        text = self.GetValue()
         self.StartStyling(0)
-        self.SetStyling(len(text.encode()), 0)
+        self.SetStyling(self.cache.bytes_length, 0)
         if spans and len(spans) < 10000:
             for i, (p1, p2) in enumerate(spans):
                 p1, p2 = self.GetBytesIndexes(p1, p2)
@@ -294,6 +295,8 @@ class MyPanel:
         self.mode = 'regex'
         self.finds = []
         self.repls = []
+
+        self.match_later = False
 
         # - Add widgets --------------------
 
@@ -446,6 +449,13 @@ class MyPanel:
     def OnMatch(self, evt):
         if isinstance(evt, wx.Event):
             evt.Skip()
+
+        if not self.match_later:
+            self.match_later = True
+            wx.CallAfter(self.MatchLater)
+
+    def MatchLater(self):
+        self.match_later = False
 
         if self.tc_patt.HasFocus():
             self.mode = 'regex'
