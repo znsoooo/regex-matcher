@@ -174,7 +174,7 @@ class MyFileDropTarget(wx.FileDropTarget):
         self.callback = callback
 
     def OnDropFiles(self, x, y, filenames):
-        self.callback(filenames[0])
+        wx.CallLater(0, self.callback, filenames[0])
         return False
 
 
