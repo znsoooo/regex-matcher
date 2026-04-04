@@ -545,9 +545,9 @@ class MyPanel:
 
 class MyFrame(wx.Frame):
     def __init__(self):
-        wx.Frame.__init__(self, None, size=(1200, 800))
+        wx.Frame.__init__(self, None, title=__title__, size=(1200, 800))
 
-        self.history = os.path.splitext(sys.argv[0])[0] + '.log'
+        self.history = os.path.realpath(sys.argv[0] + '/../RegexMatcher.log')
 
         sp = wx.SplitterWindow(self, -1, style=wx.SP_LIVE_UPDATE)
 
