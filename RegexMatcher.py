@@ -240,6 +240,11 @@ class MyTextCtrl(stc.StyledTextCtrl):
         self.SetViewWhiteSpace(True)
         self.SetWrapMode(stc.STC_WRAP_CHAR)
 
+        try:
+            self.SetVirtualSpaceOptions(stc.STC_VS_RECTANGULARSELECTION)
+        except AttributeError:  # compatible for old version of wxPython
+            self.SetVirtualSpaceOptions(stc.STC_SCVS_RECTANGULARSELECTION)
+
         self.Bind(stc.EVT_STC_CHANGE, self.UpdateCache)
         self.Bind(stc.EVT_STC_PAINTED, self.UpdateMargin)
         self.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
