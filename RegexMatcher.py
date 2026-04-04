@@ -586,6 +586,8 @@ class MyFrame(wx.Frame):
         elif key == wx.WXK_F1:
             text = re.__doc__.strip() + '\n'
             MyTextDialog('Regex Syntax', 'Help on module re:', text, (800, 600))
+        elif key == wx.WXK_F11:
+            self.ShowFullScreen(not self.IsFullScreen())
         elif key == wx.WXK_F12:
             text = __doc__[__doc__.find('License'):].strip() + '\n'
             MyTextDialog('About Regex-Matcher', 'License:', text, (600, 400))
