@@ -448,6 +448,19 @@ class MyPanel:
                 self.OnSaveFile(self.tc_text, 'text.txt')
             else:
                 self.OnSaveFile(self.tc_res, 'result.txt')
+        elif hotkey[0] == wx.MOD_ALT:
+            cb_table = {
+                ord('W'): self.cb_wrap,
+                ord('S'): self.cb_sorted,
+                ord('U'): self.cb_unique,
+                ord('R'): self.cb_reverse,
+            }
+            cb = cb_table.get(hotkey[1])
+            if cb:
+                cb.SetValue(not cb.GetValue())
+                evt = wx.CommandEvent(wx.EVT_CHECKBOX.typeId, cb.GetId())
+                evt.SetInt(int(cb.GetValue()))
+                wx.PostEvent(cb, evt)
         else:
             evt.Skip()
 
