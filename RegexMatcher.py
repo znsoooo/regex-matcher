@@ -198,6 +198,8 @@ class MyComboBox(wx.ComboBox):
         for evt in [wx.EVT_COMBOBOX, wx.EVT_COMBOBOX_DROPDOWN, wx.EVT_TEXT_ENTER, wx.EVT_SET_FOCUS, wx.EVT_KILL_FOCUS]:
             self.Bind(evt, self.AddHistory)
 
+        self.Bind(wx.EVT_KEY_DOWN, self.OnHotkeyDefault)
+
     def RemoveItem(self, item):
         try:
             self.Delete(self.GetItems().index(item))
@@ -213,6 +215,89 @@ class MyComboBox(wx.ComboBox):
             self.RemoveItem(text)
             self.Insert(text, 0)
             self.SetSelection(0)
+
+    def SetHotKeys(self):
+        self.Bind(wx.EVT_KEY_DOWN, self.OnHotkey)
+
+    def OnHotkeyDefault(self, evt):
+        evt.Skip()
+        if evt.GetKeyCode() == ord('U'):
+            self.OnHotkey(evt)
+
+    def OnHotkey(self, evt):
+        evt.Skip()
+
+        mod = evt.GetModifiers()
+        if mod not in [wx.MOD_CONTROL, wx.MOD_CONTROL | wx.MOD_SHIFT]:
+            return
+
+        key = evt.GetKeyCode()
+        no_shift = not mod & wx.MOD_SHIFT
+
+        p1, p2 = self.GetTextSelection()
+        if p1 != p2:
+            self.HotkeyOnSelection(key, no_shift)
+        else:
+            self.HotkeyOnNoSelection(key, no_shift)
+
+    def HotkeyOnSelection(self, key, no_shift):
+        p1, p2 = self.GetTextSelection()
+        text = self.GetValue()
+        old = text[p1:p2]
+
+        new = None
+
+        if key in [ord('G'), ord('9')]:
+            if no_shift:
+                new = '(' + old + ')'
+            else:
+                new = re.sub(r'^\((.*)\)$', r'\1', old)
+
+        elif key == ord('I'):
+            new = re.sub(r'^\(\?i:(.*)\)$', r'\1', old)
+            if no_shift:
+                new = '(?i:' + new + ')'
+
+        elif key in [ord('W'), ord('B')]:
+            new = re.sub(r'^(?:\\b)*(.*?)(?:\\b)*$', r'\1', old)
+            if no_shift:
+                new = r'\b' + new + r'\b'
+
+        elif key == ord('E'):
+            if no_shift:
+                new = Escape(old)
+            else:
+                new = re.sub(r'\\(.)', r'\1', old)
+
+        elif key == ord('U'):
+            if no_shift:
+                new = old.upper()
+            else:
+                new = old.lower()
+
+        if old and new and new != old:
+            self.SetValue(text[:p1] + new + text[p2:])
+            self.SetSelection(p1, p1 + len(new))
+
+    def HotkeyOnNoSelection(self, key, no_shift):
+        text = self.GetValue()
+
+        new = None
+
+        if key == ord('I'):
+            new = text.replace('(?i)', '')
+            if no_shift:
+                new = '(?i)' + new
+
+        elif key in [ord('W'), ord('B')]:
+            if no_shift:
+                new = re.sub(r'^(\(\?i\))?(?:\\b)*(.*?)(?:\\b)*$', r'\1\\b\2\\b', text)
+            else:
+                new = re.sub(r'^(\(\?i\))?(?:\\b)*(.*?)(?:\\b)*$', r'\1\2', text)
+
+        if new is not None and new != text:
+            self.SetValue(new)
+            self.SetInsertionPoint(new.rfind(r'\b'))
 
 
 class MyTextCtrl(stc.StyledTextCtrl):
@@ -400,6 +485,7 @@ class MyPanel:
         self.tc_text.Bind(wx.EVT_KEY_DOWN, self.OnStyledTextKeyDown)
         self.tc_res .Bind(wx.EVT_KEY_DOWN, self.OnStyledTextKeyDown)
         self.parent.Bind(wx.EVT_CHAR_HOOK, self.OnWindowKeyDown)
+        self.tc_patt.SetHotKeys()
 
         self.tc_text.Bind(stc.EVT_STC_UPDATEUI, lambda e: self.MappingSelection(self.tc_text, not self.tc_text.HasFocus()))
         self.tc_res .Bind(stc.EVT_STC_UPDATEUI, lambda e: self.MappingSelection(self.tc_res, not self.tc_res.HasFocus()))
@@ -425,17 +511,6 @@ class MyPanel:
             self.OnView(1)
         elif key == wx.WXK_RETURN:
             self.tc_text.SetValue(self.tc_res.GetValue())
-        elif evt.ControlDown() and key == ord('G') and self.tc_patt.HasFocus():
-            text = self.tc_patt.GetValue()
-            p1, p2 = self.tc_patt.GetTextSelection()
-            if p1 == p2:
-                return
-            if not evt.ShiftDown():
-                self.tc_patt.SetValue(text[:p1] + '(' + text[p1:p2] + ')' + text[p2:])
-                self.tc_patt.SetSelection(p1, p2 + 2)
-            elif text[p1] == '(' and text[p2-1] == ')':
-                self.tc_patt.SetValue(text[:p1] + text[p1+1:p2-1] + text[p2:])
-                self.tc_patt.SetSelection(p1, p2 - 2)
         else:
             evt.Skip()
 
