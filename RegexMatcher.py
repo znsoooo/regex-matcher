@@ -63,6 +63,8 @@ def Escape(text):
 
 
 def MapIndex(idx, idxs1, idxs2):
+    if not idxs1:
+        return idx
     pos = bisect.bisect_left(idxs1, (idx, idx))
     if pos == len(idxs1):
         return idxs2[-1][-1] + (idx - idxs1[-1][-1])
@@ -602,7 +604,7 @@ class MyPanel:
                 self.tc_res.SetUnicodeSelection(p1, p2)
 
     def MappingSelection(self, tc, skip=False):
-        if not self.repls or skip:
+        if skip or self.cb_unique.GetValue() or self.cb_sorted.GetValue() or self.cb_reverse.GetValue():
             return
         p11, p12 = tc.GetSelection()
         p11, p12 = tc.GetUnicodeIndexes(p11, p12)
