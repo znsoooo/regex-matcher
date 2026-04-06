@@ -348,6 +348,12 @@ class MyTextCtrl(stc.StyledTextCtrl):
         width = len(str(line)) * 9 + 5
         self.SetMarginWidth(1, width)
 
+    def SetWrapMode(self, mode):  # fix scrollbar drift
+        pos = self.PositionFromPoint((0, 0))
+        line = self.LineFromPosition(pos)
+        super().SetWrapMode(mode)
+        self.ScrollToLine(line)
+
     def OnKeyDown(self, evt):
         hotkey = (evt.GetModifiers(), evt.GetKeyCode())
         if hotkey == (wx.MOD_CONTROL | wx.MOD_SHIFT, wx.WXK_UP):
