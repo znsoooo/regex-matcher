@@ -65,6 +65,8 @@ def Escape(text):
 def MapIndex(idx, idxs1, idxs2):
     if not idxs1:
         return idx
+    if idx == idxs1[0][0]:  # special rule for first position
+        return idxs2[0][0]
     pos = bisect.bisect_left(idxs1, (idx, idx))
     if pos == len(idxs1):
         return idxs2[-1][-1] + (idx - idxs1[-1][-1])
