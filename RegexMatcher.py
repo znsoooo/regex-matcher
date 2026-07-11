@@ -53,7 +53,7 @@ from functools import lru_cache
 import wx
 import wx.stc as stc
 
-__version__ = 'v1.3.3'
+__version__ = 'v1.4.0'
 __title__ = 'RegEx Matcher ' + __version__
 
 
